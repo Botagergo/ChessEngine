@@ -35,6 +35,8 @@ Bitboard kingAttacks(Square king)
 
 Bitboard pieceAttacks(Square square, Piece piece_type, Bitboard occupied)
 {
+	assert(piece_type != PAWN);
+
 	switch (piece_type)
 	{
 	case KNIGHT:
@@ -47,7 +49,5 @@ Bitboard pieceAttacks(Square square, Piece piece_type, Bitboard occupied)
 		return queenAttacks(square, occupied);
 	case KING:
 		return kingAttacks(square);
-	default:
-		assert(0 == 1);
 	}
 }

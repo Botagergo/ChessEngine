@@ -1,4 +1,6 @@
-﻿#include "attacks.h"
+﻿#include <regex>
+
+#include "attacks.h"
 #include "bitboard_iterator.h"
 #include "board.h"
 #include "constants.h"
@@ -18,70 +20,98 @@ Board::Board()
 	_en_passant_target = NO_SQUARE;
 	_en_passant_capture_target = NO_SQUARE;
 	_castling_rights = 0;
+
+	_halfmove_clock = _fullmove_num = 1;
 }
 
-// Létrehoz egy táblát a megadott fen-ből
-// A fen-nek helyesnek kell lennie
 Board Board::fromFen(const std::string &fen)
 {
+	const static std::string pos_regex = "((?:[1-8]|[PNBRQKpnbrqk]){1,8})\\/((?:[1-8]|[PNBRQKpnbrqk]){1,8})\\/"
+		"((?:[1-8]|[PNBRQKpnbrqk]){1,8})\\/((?:[1-8]|[PNBRQKpnbrqk]){1,8})\\/"
+		"((?:[1-8]|[PNBRQKpnbrqk]){1,8})\\/((?:[1-8]|[PNBRQKpnbrqk]){1,8})\\/"
+		"((?:[1-8]|[PNBRQKpnbrqk]){1,8})\\/((?:[1-8]|[PNBRQKpnbrqk]){1,8})";
+
+	const static std::string to_move_regex = "(w|b)";
+	const static std::string castling_rights_regex = "(\\-|[KQkq]{1,4})";
+	const static std::string en_passant_square_regex = "(\\-|[a-h][1-8])";
+	const static std::string halfmove_clock_regex = "(0|[1-9][0-9]*)";
+	const static std::string fullmove_number_regex = "([1-9][0-9]*)";
+	const static std::string whitespace_regex = "\\s*";
+
+	const static std::string fen_regex = std::string("^") +
+		whitespace_regex + pos_regex +
+		whitespace_regex + to_move_regex +
+		whitespace_regex + castling_rights_regex +
+		whitespace_regex + en_passant_square_regex +
+		whitespace_regex + halfmove_clock_regex +
+		whitespace_regex + fullmove_number_regex + 
+		whitespace_regex + std::string("$");
+
+	std::smatch match_result;
+	if (!std::regex_search(fen, match_result, std::regex(fen_regex)))
+		throw FenParseError(fen.c_str());
+
 	Board board;
-
-	std::istringstream iss(fen);
-	std::string pos; iss >> pos;
-
-	std::istringstream iss1(pos);
 
 	for (int i = 0; i < 8; ++i)
 	{
-		int j = 0;
-		char c = iss1.get();
+		std::string str = match_result[i + 1];
+		int curr = 0;
 
-		while (j < 8 && c != '/')
+		for (char c : str)
 		{
-			Color color = 'a' <= c && c <= 'z' ? BLACK : WHITE;
-			Square square = (Square)((7 - i) * 8 + j);
-			Bitboard b = SquareBB[square];
 			Piece piece = charToPiece(tolower(c));
 
 			if (piece != NO_PIECE)
 			{
+				Color color = 'a' <= c && c <= 'z' ? BLACK : WHITE;
+				Square square = (Square)((7 - i) * 8 + curr);
+				Bitboard b = SquareBB[square];
 				board._pieces[color][piece] |= b;
-				++j;
+				++curr;
 			}
 			else
-				j += c - '0';
-
-			c = iss1.get();
+				curr += c - '0';
 		}
+
+		if (curr != 8)
+			throw FenParseError(fen.c_str());
 	}
 
-	char next; iss >> next;
-
-	if (next == 'w')
+	if (match_result[9] == 'w')
 		board._to_move = WHITE;
 	else
 		board._to_move = BLACK;
 
-	std::string castling; iss >> castling;
-	for (char c : castling)
+	std::string castling = match_result[10];
+	if (castling != "-")
 	{
-		if (c == 'K')
-			board._castling_rights |= CastleFlag[WHITE][KINGSIDE];
-		else if (c == 'Q')
-			board._castling_rights |= CastleFlag[WHITE][QUEENSIDE];
-		else if (c == 'k')
-			board._castling_rights |= CastleFlag[BLACK][KINGSIDE];
-		else if (c == 'q')
-			board._castling_rights |= CastleFlag[BLACK][QUEENSIDE];
+		for (char c : castling)
+		{
+			if (c == 'K')
+				board._castling_rights |= CastleFlag[WHITE][KINGSIDE];
+			else if (c == 'Q')
+				board._castling_rights |= CastleFlag[WHITE][QUEENSIDE];
+			else if (c == 'k')
+				board._castling_rights |= CastleFlag[BLACK][KINGSIDE];
+			else
+				board._castling_rights |= CastleFlag[BLACK][QUEENSIDE];
+		}
 	}
 
-	std::string enPassant; iss >> enPassant;
-	if (enPassant != "-")
+	std::string en_passant = match_result[11];
+	if (en_passant != "-")
 	{
-		board._en_passant_target = parseSquare(enPassant.c_str());
+		board._en_passant_target = parseSquare(en_passant);
 		board._en_passant_capture_target = board.toMove() == WHITE ? (Square)(board._en_passant_target - 8)
 			: Square(board._en_passant_target + 8);
 	}
+
+	std::stringstream ss(match_result[12]);
+	ss >> board._halfmove_clock;
+
+	ss = std::stringstream(match_result[13]);
+	ss >> board._fullmove_num;
 
 	board._initOccupied();
 	board._initPieceList();
@@ -92,7 +122,7 @@ Board Board::fromFen(const std::string &fen)
 
 std::string Board::fen() const
 {
-	std::string fen = "";
+	std::stringstream fen;
 
 	for (int r = 7; r >= 0; r--)
 	{
@@ -107,7 +137,7 @@ std::string Board::fen() const
 			{
 				if (empty != 0)
 				{
-					fen += (char)empty + '0';
+					fen << (char)empty + '0';
 					empty = 0;
 				}
 
@@ -115,62 +145,72 @@ std::string Board::fen() const
 				if (occupied(WHITE) & SquareBB[square])
 					p += ('A' - 'a');
 
-				fen += p;
+				fen << p;
 			}
 		}
 		if (empty != 0)
-			fen += (char)empty + '0';
+			fen << (char)empty + '0';
 
 		if (r > 0)
-			fen += '/';
+			fen << '/';
 	}
 
-	fen += " ";
+	fen << " ";
 
 	if (toMove() == WHITE)
-		fen += "w";
+		fen << "w";
 	else
-		fen += "b";
+		fen << "b";
 
-	fen += " ";
+	fen << " ";
 
 	if (canCastle(WHITE, KINGSIDE) | canCastle(WHITE, QUEENSIDE) | canCastle(BLACK, KINGSIDE) | canCastle(BLACK, QUEENSIDE))
 	{
-		fen += (canCastle(WHITE, KINGSIDE) ? "K" : "");
-		fen += (canCastle(WHITE, QUEENSIDE) ? "Q" : "");
-		fen += (canCastle(BLACK, KINGSIDE) ? "k" : "");
-		fen += (canCastle(BLACK, QUEENSIDE) ? "q" : "");
+		fen << (canCastle(WHITE, KINGSIDE) ? "K" : "");
+		fen << (canCastle(WHITE, QUEENSIDE) ? "Q" : "");
+		fen << (canCastle(BLACK, KINGSIDE) ? "k" : "");
+		fen << (canCastle(BLACK, QUEENSIDE) ? "q" : "");
 	}
 	else
-		fen += "-";
+		fen << "-";
 
-	fen += " ";
+	fen << " ";
 
 	if (enPassantTarget() != NO_SQUARE)
-		fen += SquareStr[bitScanForward(enPassantTarget())];
+		fen << SquareStr[enPassantTarget()];
 	else
-		fen += '-';
+		fen << '-';
 
-	fen += " ";
+	fen << " ";
 
-	fen += "0 1";
+	assert(_halfmove_clock >= 0 && _fullmove_num > 0);
+	fen << _halfmove_clock << " " << _fullmove_num;
 
-	return fen;
+	return fen.str();
 }
 
-// Nem kezeli: en passant, double push
 Move Board::parseMove(std::string str) const
 {
+	const static std::string square_regex = "([a-h][1-8])";
+	const static std::string promotion_regex = "(nbrq)";
+	const static std::string whitespace_regex = "\\s*";
+
+	const static std::string move_regex = std::string("^") +
+		whitespace_regex + square_regex + square_regex + promotion_regex +
+		whitespace_regex + std::string("$");
+
+	std::smatch match_result;
+	if (!std::regex_search(str, match_result, std::regex(move_regex)))
+		throw MoveParseError(str.c_str());
+
 	Move move;
 
-	move.promotion = NO_PIECE;
-	move.from = parseSquare(str.substr(0, 2).c_str());
-	move.to = parseSquare(str.substr(2, 2).c_str());
+	move.from = parseSquare(match_result[1]);
+	move.to = parseSquare(match_result[2]);
+	move.promotion = match_result.size() == 4 ? charToPiece(*match_result[3].first) : NO_PIECE;
 	move.piece_type = pieceAt(move.from);
 
-	if (str.size() >= 5)
-		move.promotion = charToPiece(tolower(str[4]));
-	else if (move.piece_type == KING)
+	if (move.piece_type == KING)
 	{
 		if (move.to - move.from == 2)
 			move.flags |= KINGSIDE_CASTLE;
@@ -197,9 +237,12 @@ Move Board::parseMove(std::string str) const
 
 std::string Board::moveToString(const Move &move) const
 {
-	return SquareStr[move.from] + SquareStr[move.to];
+	std::stringstream ss;
+	ss << SquareStr[move.from] << SquareStr[move.to];
+	if(move.promotion != NO_PIECE)
+		ss << pieceToChar(move.promotion);
+	return ss.str();
 }
-
 
 void Board::print(std::ostream & os) const
 {
@@ -254,6 +297,65 @@ Bitboard Board::attacked(Square square) const
 Color Board::toMove() const
 {
 	return _to_move;
+}
+
+bool Board::makeMove(const Move & move)
+{
+	if (!(move.flags & NULL_MOVE))
+	{
+		if (move.flags & CASTLE)
+			_castle((move.flags & CASTLE) == KINGSIDE_CASTLE ? KINGSIDE : QUEENSIDE);
+		else
+			_makeNormalMove(move);
+
+		_updateCastlingRights(move);
+		_updateAttacked();
+	}
+
+	// Ha sötét lép (Black == 1), akkor növeljük a lépésszámot
+	_fullmove_num += toMove();
+
+	if (move.piece_type == PAWN || move.flags & CAPTURE)
+		++_halfmove_clock;
+	else
+		_halfmove_clock = 0;
+
+	_to_move = ~toMove();
+
+	if (isInCheck(~toMove()))
+		return false;
+	else
+		return true;
+}
+
+bool Board::canCastle(Color color, Side side) const
+{
+	return _castling_rights & CastleFlag[color][side];
+}
+
+Square Board::enPassantTarget() const
+{
+	return _en_passant_target;
+}
+
+Square Board::enPassantCaptureTarget() const
+{
+	return _en_passant_capture_target;
+}
+
+bool Board::isInCheck(Color color) const
+{
+	return pieces(color, KING) & attacked(~color);
+}
+
+int Board::halfmoveClock() const
+{
+	return _halfmove_clock;
+}
+
+int Board::fullmoveNum() const
+{
+	return _fullmove_num;
 }
 
 void Board::_updateCastlingRights(const Move &m)
@@ -354,47 +456,6 @@ void Board::_castle(int side)
 
 	_en_passant_target = NO_SQUARE;
 	_en_passant_capture_target = NO_SQUARE;
-}
-
-bool Board::makeMove(const Move & move)
-{
-	if (!(move.flags & NULL_MOVE))
-	{
-		if (move.flags & CASTLE)
-			_castle((move.flags & CASTLE) == KINGSIDE_CASTLE ? KINGSIDE : QUEENSIDE);
-		else
-			_makeNormalMove(move);
-
-		_updateCastlingRights(move);
-		_updateAttacked();
-	}
-
-	_to_move = ~toMove();
-
-	if (isInCheck(~toMove()))
-		return false;
-	else
-		return true;
-}
-
-bool Board::canCastle(Color color, Side side) const
-{
-	return _castling_rights & CastleFlag[color][side];
-}
-
-Square Board::enPassantTarget() const
-{
-	return _en_passant_target;
-}
-
-Square Board::enPassantCaptureTarget() const
-{
-	return _en_passant_capture_target;
-}
-
-bool Board::isInCheck(Color color) const
-{
-	return pieces(color, KING) & attacked(~color);
 }
 
 void Board::_initOccupied()

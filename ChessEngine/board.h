@@ -10,10 +10,23 @@
 #include "move.h"
 #include "types.h"
 
+class FenParseError : std::exception
+{
+public:
+	FenParseError(const char *msg) : exception(msg) {}
+};
+
+class MoveParseError : std::exception
+{
+public:
+	MoveParseError(const char *msg) : exception(msg) {}
+};
+
 class Board
 {
 public:
 	static Board fromFen(const std::string &fen);
+
 	std::string fen() const;
 	Move parseMove(std::string str) const;
 	std::string moveToString(const Move &move) const;
@@ -40,6 +53,9 @@ public:
 
 	bool isInCheck(Color color) const;
 
+	int halfmoveClock() const;
+	int fullmoveNum() const;
+
 	const static int AllCastlingRights;
 	const static int CastleFlag[COLOR_NB][SIDE_NB];
 private:
@@ -60,6 +76,9 @@ private:
 	Square _en_passant_target;
 	Square _en_passant_capture_target;
 	unsigned char _castling_rights;
+
+	int _halfmove_clock;
+	int _fullmove_num;
 
 	void _initOccupied();
 	void _initPieceList();

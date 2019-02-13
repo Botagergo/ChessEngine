@@ -28,10 +28,10 @@ void initAttackTables() {
 	{
 		Bitboard king = SquareBB[i];
 
-		Bitboard attacks = shift<NORTH>(king) | shift<NORTHEAST>(king) |
-			shift<EAST>(king) | shift<SOUTHEAST>(king) |
-			shift<SOUTH>(king) | shift<SOUTHWEST>(king) |
-			shift<WEST>(king) | shift<NORTHWEST>(king);
+		Bitboard attacks = Util::shift<NORTH>(king) | Util::shift<NORTHEAST>(king) |
+			Util::shift<EAST>(king)  | Util::shift<SOUTHEAST>(king) |
+			Util::shift<SOUTH>(king) | Util::shift<SOUTHWEST>(king) |
+			Util::shift<WEST>(king)  | Util::shift<NORTHWEST>(king);
 
 		KingAttackTable[i] = attacks;
 	}
@@ -51,7 +51,7 @@ void initAttackTables() {
 	//------------------------
 	ray = C64(0x0102040810204000);
 
-	for (int file = 7; file >= 0; --file, ray = shift<WEST>(ray))
+	for (int file = 7; file >= 0; --file, ray = Util::shift<WEST>(ray))
 	{
 		Bitboard n = ray;
 		for (int rank = 0; rank < SQUARE_NB; rank += 8, n <<= 8)
@@ -68,7 +68,7 @@ void initAttackTables() {
 	for (int rank = 0; rank < SQUARE_NB; rank += 8, ray <<= 8)
 	{
 		Bitboard n = ray;
-		for (int file = 7; file >= 0; --file, n = shift<WEST>(n))
+		for (int file = 7; file >= 0; --file, n = Util::shift<WEST>(n))
 		{
 			SlidingAttackTable[WEST][rank + file] = n;
 		}
@@ -79,7 +79,7 @@ void initAttackTables() {
 	//------------------------
 	ray = C64(0x40201008040201);
 
-	for (int file = 7; file >= 0; --file, ray = shift<WEST>(ray))
+	for (int file = 7; file >= 0; --file, ray = Util::shift<WEST>(ray))
 	{
 		Bitboard n = ray;
 		for (int rank = 56; rank >= 0; rank -= 8, n >>= 8)
@@ -101,7 +101,7 @@ void initAttackTables() {
 	//------------------------
 	ray = C64(0x2040810204080);
 
-	for (int file = 0; file < 8; ++file, ray = shift<EAST>(ray))
+	for (int file = 0; file < 8; ++file, ray = Util::shift<EAST>(ray))
 	{
 		Bitboard n = ray;
 		for (int rank = 56; rank >= 0; rank -= 8, n >>= 8)
@@ -118,7 +118,7 @@ void initAttackTables() {
 	for (int rank = 0; rank < SQUARE_NB; rank += 8, ray <<= 8)
 	{
 		Bitboard n = ray;
-		for (int file = 0; file < 8; ++file, n = shift<EAST>(n))
+		for (int file = 0; file < 8; ++file, n = Util::shift<EAST>(n))
 		{
 			SlidingAttackTable[EAST][rank + file] = n;
 		}
@@ -129,7 +129,7 @@ void initAttackTables() {
 	//------------------------
 	ray = C64(0x8040201008040200);
 
-	for (int file = 0; file < 8; ++file, ray = shift<EAST>(ray))
+	for (int file = 0; file < 8; ++file, ray = Util::shift<EAST>(ray))
 	{
 		Bitboard n = ray;
 		for (int rank = 0; rank < 8 * 8; rank += 8, n <<= 8)

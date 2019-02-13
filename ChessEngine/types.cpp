@@ -27,14 +27,17 @@ Piece charToPiece(char c)
 
 char pieceToChar(Piece p)
 {
+	if ((int)p < 0 || 5 < (int)p)
+		return '0';
+
 	char map[PIECE_NB] = { 'p', 'n', 'b', 'r', 'q', 'k'};
 	return map[p];
 }
 
 Square parseSquare(const std::string &s)
 {
-	assert(s.size() == 2);
-	assert('a' <= s[0] && s[0] <= 'h' && '1' <= s[1] && s[1] <= '8');
+	if (s.size() != 2 || s[0] < 'a' || 'h' < s[0] || s[1] < '1' || '8' < s[1])
+		return NO_SQUARE;
 
 	int col = s[0] - 'a';
 	int row = s[1] - '1';

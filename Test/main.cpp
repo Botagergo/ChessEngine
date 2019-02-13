@@ -12,7 +12,7 @@ using namespace std;
 const std::string start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 void perft_received(Board board, int depth, std::vector<Move> moves, bool per_move, bool full);
-void printPerftRes(PerftResult res);
+void printPerftRes(Perft::PerftResult res);
 
 enum class command
 {
@@ -213,7 +213,7 @@ void perft_received(Board board, int depth, std::vector<Move> moves, bool per_mo
 
 	if (per_move)
 	{
-		auto res = perftPerMove(board, depth);
+		auto res = Perft::perftPerMove(board, depth);
 		for (auto p : res)
 		{
 			std::cout << board.moveToString(p.first) << ":\t";
@@ -233,12 +233,12 @@ void perft_received(Board board, int depth, std::vector<Move> moves, bool per_mo
 	}
 	else
 	{
-		auto res = perft(board, depth);
+		auto res = Perft::perft(board, depth);
 		printPerftRes(res);
 	}
 }
 
-void printPerftRes(PerftResult res)
+void printPerftRes(Perft::PerftResult res)
 {
 	std::cout << "nodes\t\t\t" << res.nodes << std::endl;
 	std::cout << "captures\t\t" << res.captures << std::endl;

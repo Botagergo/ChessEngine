@@ -4,35 +4,35 @@
 #include <stack>
 #include <vector>
 
-PerftResult perft(Board board, int depth)
+Perft::PerftResult Perft::perft(Board board, int depth)
 {
-	PerftResult res = { 0 };
-	res.nodes = _perft(board, depth, res.captures, res.en_passants, res.king_castles, res.queen_castles, res.promotions);
+	Perft::PerftResult res = { 0 };
+	res.nodes = Perft::_perft(board, depth, res.captures, res.en_passants, res.king_castles, res.queen_castles, res.promotions);
 
 	return res;
 }
 
-std::vector<std::pair<Move, PerftResult> > perftPerMove(Board board, int depth)
+std::vector<std::pair<Move, Perft::PerftResult> > Perft::perftPerMove(Board board, int depth)
 {
-	auto res = std::vector<std::pair<Move, PerftResult> >();
+	auto res = std::vector<std::pair<Move, Perft::PerftResult> >();
 	std::vector<Move> moves;
 
 	if (board.toMove() == WHITE)
-		genMoves<WHITE, false>(board, moves);
+		Move_Gen::genMoves<WHITE, false>(board, moves);
 	else
-		genMoves<BLACK, false>(board, moves);
+		Move_Gen::genMoves<BLACK, false>(board, moves);
 
 	for (Move &move : moves)
 	{
 		Board board_copy = board;
 		if (board_copy.makeMove(move))
-			res.push_back(std::make_pair(move, perft(board_copy, depth)));
+			res.push_back(std::make_pair(move, Perft::perft(board_copy, depth)));
 	}
 
 	return res;
 }
 
-int _perft(Board &board, int depth, int &captures, int &en_passants, int &king_castles, int &queen_castles, int &promotions)
+int Perft::_perft(Board &board, int depth, int &captures, int &en_passants, int &king_castles, int &queen_castles, int &promotions)
 {
 	if (depth <= 0)
 	{
@@ -43,9 +43,9 @@ int _perft(Board &board, int depth, int &captures, int &en_passants, int &king_c
 	int score = 0;
 
 	if (board.toMove() == WHITE)
-		genMoves<WHITE, false>(board, moves);
+		Move_Gen::genMoves<WHITE, false>(board, moves);
 	else
-		genMoves<BLACK, false>(board, moves);
+		Move_Gen::genMoves<BLACK, false>(board, moves);
 
 	for (Move &move : moves)
 	{

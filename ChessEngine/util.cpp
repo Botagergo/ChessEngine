@@ -4,21 +4,21 @@
 
 #pragma warning (disable : 4146)
 
-Bitboard verticalFlip(Bitboard bb) {
+Bitboard Util::verticalFlip(Bitboard bb) {
 	return _byteswap_uint64(bb);
 }
 
-void clearLSB(Bitboard &bb)
+void Util::clearLSB(Bitboard &bb)
 {
 	bb &= (bb - 1);
 }
 
-Bitboard isolateLSB(Bitboard b)
+Bitboard Util::isolateLSB(Bitboard b)
 {
 	return b & -b;
 }
 
-Square bitScanForward(Bitboard bb)
+Square Util::bitScanForward(Bitboard bb)
 {
 	unsigned long bit;
 #ifdef _M_AMD64
@@ -29,14 +29,14 @@ Square bitScanForward(Bitboard bb)
 	return static_cast<Square>(bit);
 }
 
-Square bitScanForwardPop(Bitboard &bb)
+Square Util::bitScanForwardPop(Bitboard &bb)
 {
 	Square square = bitScanForward(bb);
 	clearLSB(bb);
 	return square;
 }
 
-Square bitScanReverse(Bitboard bb)
+Square Util::bitScanReverse(Bitboard bb)
 {
 	if (bb == 0)
 		return NO_SQUARE;

@@ -30,14 +30,14 @@ public:
 
 		self_type& operator++()
 		{
-			clearLSB(_bb);
+			Util::clearLSB(_bb);
 			return *this;
 		}
 
 		self_type operator++(int)
 		{
 			self_type ret = *this;
-			clearLSB(_bb);
+			Util::clearLSB(_bb);
 			return ret;
 		}
 
@@ -80,11 +80,11 @@ private:
 template<>
 typename BitboardIterator<Square>::iterator::value_type BitboardIterator<Square>::iterator::operator*() const
 {
-	return bitScanForward(_bb);
+	return Util::bitScanForward(_bb);
 }
 
 template<>
 typename BitboardIterator<Bitboard>::iterator::value_type BitboardIterator<Bitboard>::iterator::operator*() const
 {
-	return isolateLSB(_bb);
+	return Util::isolateLSB(_bb);
 }

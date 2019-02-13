@@ -17,7 +17,7 @@ Bitboard slidingAttacks(Square square, Bitboard occupied)
 
 	if (blockers)
 	{
-		int s = up ? bitScanForward(blockers) : bitScanReverse(blockers);
+		int s = up ? Util::bitScanForward(blockers) : Util::bitScanReverse(blockers);
 		attacks ^= SlidingAttackTable[dir][s];
 	}
 
@@ -27,9 +27,9 @@ Bitboard slidingAttacks(Square square, Bitboard occupied)
 template <Color color>
 Bitboard pawnSinglePushTargets(Bitboard pawns, Bitboard empty) {
 	if (color == WHITE)
-		return shift<NORTH>(pawns) & empty;
+		return Util::shift<NORTH>(pawns) & empty;
 	else
-		return shift<SOUTH>(pawns) & empty;
+		return Util::shift<SOUTH>(pawns) & empty;
 }
 
 template <Color color>
@@ -49,9 +49,9 @@ Bitboard pawnPushTargets(Bitboard pawns, Bitboard empty)
 template <Color color>
 Bitboard pawnAttacks(Bitboard pawns) {
 	if (color == WHITE)
-		return shift<NORTHWEST>(pawns) | shift<NORTHEAST>(pawns);
+		return Util::shift<NORTHWEST>(pawns) | Util::shift<NORTHEAST>(pawns);
 	else
-		return shift<SOUTHWEST>(pawns) | shift<SOUTHEAST>(pawns);
+		return Util::shift<SOUTHWEST>(pawns) | Util::shift<SOUTHEAST>(pawns);
 }
 
 Bitboard knightAttacks(Square knight);

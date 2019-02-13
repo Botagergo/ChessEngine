@@ -10,6 +10,7 @@
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 template<> inline std::wstring  Microsoft::VisualStudio::CppUnitTestFramework::ToString<Color>(const Color& c) { RETURN_WIDE_STRING((int)c); }
+template<> inline std::wstring  Microsoft::VisualStudio::CppUnitTestFramework::ToString<Square>(const Square& s) { RETURN_WIDE_STRING((int)s); }
 
 namespace UnitTests
 {
@@ -20,22 +21,22 @@ namespace UnitTests
 		{
 			Bitboard bb = C64(0x920000091002002);
 
-			Assert::AreEqual(shift<NORTH>(0), C64(0));
+			Assert::AreEqual(Util::shift<NORTH>(0), C64(0));
 
-			Assert::AreEqual(shift<NORTH>(bb), C64(0x2000009100200200));
-			Assert::AreEqual(shift<NORTHEAST>(bb), C64(0x4000002200400400));
-			Assert::AreEqual(shift<EAST>(bb), C64(0x1240000022004004));
-			Assert::AreEqual(shift<SOUTHEAST>(bb), C64(0x12400000220040));
-			Assert::AreEqual(shift<SOUTH>(bb), C64(0x9200000910020));
-			Assert::AreEqual(shift<SOUTHWEST>(bb), C64(0x4100000480010));
-			Assert::AreEqual(shift<WEST>(bb), C64(0x410000048001001));
-			Assert::AreEqual(shift<NORTHWEST>(bb), C64(0x1000004800100100));
+			Assert::AreEqual(Util::shift<NORTH>(bb), C64(0x2000009100200200));
+			Assert::AreEqual(Util::shift<NORTHEAST>(bb), C64(0x4000002200400400));
+			Assert::AreEqual(Util::shift<EAST>(bb), C64(0x1240000022004004));
+			Assert::AreEqual(Util::shift<SOUTHEAST>(bb), C64(0x12400000220040));
+			Assert::AreEqual(Util::shift<SOUTH>(bb), C64(0x9200000910020));
+			Assert::AreEqual(Util::shift<SOUTHWEST>(bb), C64(0x4100000480010));
+			Assert::AreEqual(Util::shift<WEST>(bb), C64(0x410000048001001));
+			Assert::AreEqual(Util::shift<NORTHWEST>(bb), C64(0x1000004800100100));
 		}
 
 		TEST_METHOD(flipTest)
 		{
-			Assert::AreEqual(verticalFlip(C64(0)), C64(0));
-			Assert::AreEqual(verticalFlip(C64(0x1000200020020004)), C64(0x400022000200010));
+			Assert::AreEqual(Util::verticalFlip(C64(0)), C64(0));
+			Assert::AreEqual(Util::verticalFlip(C64(0x1000200020020004)), C64(0x400022000200010));
 		}
 
 		TEST_METHOD(pawnPushTargetsTest)
@@ -50,7 +51,7 @@ namespace UnitTests
 			Bitboard attacks = C64(0x420000000a000000);
 
 			Assert::AreEqual(pawnAttacks<WHITE>(pawns), attacks);
-			Assert::AreEqual(pawnAttacks<BLACK>(verticalFlip(pawns)), verticalFlip(attacks));
+			Assert::AreEqual(pawnAttacks<BLACK>(Util::verticalFlip(pawns)), Util::verticalFlip(attacks));
 		}
 
 		TEST_METHOD(knightAttacksTest)
@@ -129,6 +130,9 @@ namespace UnitTests
 
 		TEST_METHOD(Board_fromFenTest) //TODO: add more tests
 		{
+			initSquareBB();
+			initAttackTables();
+ 
 			Board b = Board::fromFen("5k2/2p5/1n2p3/8/4pP2/4P3/6PP/R2QK1NR b Q f3 0 1 ");
 
 			Assert::IsFalse(b.canCastle(BLACK, KINGSIDE));
@@ -152,11 +156,36 @@ namespace UnitTests
 			Assert::AreEqual(b.pieces(BLACK, QUEEN), C64(0x0));
 			Assert::AreEqual(b.pieces(BLACK, KING), C64(0x2000000000000000));
 
-			Assert::AreEqual(b.enPassantTarget(), SquareBB[F3]);
-			Assert::AreEqual(b.enPassantCaptureTarget(), SquareBB[F4]);
+			Assert::AreEqual(b.enPassantTarget(), F3);
+			Assert::AreEqual(b.enPassantCaptureTarget(), F4);
 
 			Assert::AreEqual(b.occupied(WHITE), C64(0x2010c0d9));
 			Assert::AreEqual(b.occupied(BLACK), C64(0x2004120010000000));
+
+			Board::fromFen("5k2/2p5/1n2p3/8/4pP2/4P3/6PP/R2QK1NR b - - 0 111 ");
+			Board::fromFen("5k2/2p5/1n2p3/8/4pP2/4P3/6PP/R2QK1NR b - - 4444 111 ");
+
+			std::vector<std::string> bad_fens = {
+				"",
+				"rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP w KQ - 1 8",
+				"rnbq1kr/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP w KQ - 1 8"
+				"rnbq1krqq/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP w KQ - 1 8"
+				"rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/8/8 w KQ - 1 8",
+				"rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/8 r KQ - 1 8",
+				"rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/8 r KQw - 1 8",
+				"rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/8 r KQ * 1 8",
+				"rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/8 r KQ * 1 -8",
+				"rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/8 r KQ * 0 8",
+			};
+
+			for (auto fen : bad_fens)
+			{
+				Assert::ExpectException<FenParseError>([&]()
+				{
+					Board::fromFen(fen);
+				});
+			}
 		}
 	};
 }
+
