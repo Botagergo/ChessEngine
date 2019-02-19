@@ -5,13 +5,16 @@
 #include "attacks.h"
 #include "bitboard_iterator.h"
 #include "board.h"
+#include "evaluation.h"
 #include "move.h"
 #include "util.h"
 
 namespace Move_Gen
 {
+	//int getScore(const Board & board, const Move & move);
+
 	template <Color toMove, bool quiescence>
-	void genMoves(const Board &board, std::vector<Move> &moves)
+	void genMoves(const Board & board, std::vector<Move> & moves)
 	{
 		genPawnMoves<toMove, quiescence>(board, moves);
 		genPieceMoves<KNIGHT, toMove, quiescence>(board, moves);
@@ -31,102 +34,82 @@ namespace Move_Gen
 	void genPawnMoves(const Board &board, std::vector<Move> &moves)
 	{
 		Bitboard pawns = board.pieces(toMove, PAWN);
-		Move move(PAWN, NO_SQUARE, NO_SQUARE);
 
 		for (Square from : BitboardIterator<Square>(pawns))
 		{
-			move.from = from;
-			move.flags = CAPTURE;
-
 			Bitboard targets = board.attacked(from) & board.occupied(~toMove);
 			for (Square to : BitboardIterator<Square>(targets))
 			{
-				move.to = to;
-
 				if (SquareBB[to] & backRank(toMove))
-					genPromotions(move, moves);
+				{
+					moves.push_back(Move(PAWN, from, to, QUEEN,  FLAG_CAPTURE));
+					moves.push_back(Move(PAWN, from, to, ROOK,   FLAG_CAPTURE));
+					moves.push_back(Move(PAWN, from, to, BISHOP, FLAG_CAPTURE));
+					moves.push_back(Move(PAWN, from, to, KNIGHT, FLAG_CAPTURE));
+				}
 				else
-					moves.push_back(move);
+					moves.push_back(Move(PAWN, from, to, FLAG_CAPTURE));
 			}
 
 			if (!quiescence)
 			{
-				move.flags = 0;
 				Bitboard targets = pawnSinglePushTargets<toMove>(SquareBB[from], ~board.occupied());
 
 				if (targets)
 				{
-					move.to = Util::bitScanForward(targets);
+					Square to = Util::bitScanForward(targets);
 
-					if (SquareBB[move.to] & backRank(toMove))
-						genPromotions(move, moves);
+					if (SquareBB[to] & backRank(toMove))
+					{
+						moves.push_back(Move(PAWN, from, to, QUEEN));
+						moves.push_back(Move(PAWN, from, to, ROOK));
+						moves.push_back(Move(PAWN, from, to, BISHOP));
+						moves.push_back(Move(PAWN, from, to, KNIGHT));
+					}
 					else
-						moves.push_back(move);
+						moves.push_back(Move(PAWN, from, to));
 				}
 
 				targets = pawnDoublePushTargets<toMove>(SquareBB[from], ~board.occupied());
 				if (targets)
 				{
-					move.to = Util::bitScanForward(targets);
-					move.flags = DOUBLE_PUSH;
-					moves.push_back(move);
+					Square to = Util::bitScanForward(targets);
+					moves.push_back(Move(PAWN, from, to, FLAG_DOUBLE_PUSH));
 				}
 			}
 		}
 
 		if (board.enPassantTarget() != NO_SQUARE)
 		{
-			move.to = board.enPassantTarget();
-			move.flags = CAPTURE | EN_PASSANT;
+			Square to = board.enPassantTarget();
 			Bitboard ep_pawns = pawnAttacks<~toMove>(SquareBB[board.enPassantTarget()]) & pawns;
 
 			for (Square from : BitboardIterator<Square>(ep_pawns))
 			{
-				move.from = from;
-				moves.push_back(move);
+				moves.push_back(Move(PAWN, from, to, FLAG_CAPTURE | FLAG_EN_PASSANT));
 			}
 		}
 	}
 
-	void genPromotions(Move move, std::vector<Move> &moves)
-	{
-		for (Piece piece : {KNIGHT, BISHOP, ROOK, QUEEN})
-		{
-			move.promotion = piece;
-			moves.push_back(move);
-		}
-
-		move.promotion = NO_PIECE;
-	}
-
-	template <Piece pieceType, Color toMove, bool quiescence>
+	template <PieceType pieceType, Color toMove, bool quiescence>
 	void genPieceMoves(const Board &board, std::vector<Move> &moves)
 	{
-		Move move(pieceType, NO_SQUARE, NO_SQUARE);
-
 		for (Square from : BitboardIterator<Square>(board.pieces(toMove, pieceType)))
 		{
 			Bitboard targets = board.attacked(from) & board.occupied(~toMove);
 
-			move.from = from;
-			move.flags = CAPTURE;
-
 			for (Square to : BitboardIterator<Square>(targets))
 			{
-				move.to = to;
-				moves.push_back(move);
+				moves.push_back(Move(pieceType, from, to, FLAG_CAPTURE));
 			}
 
 			if (!quiescence)
 			{
 				Bitboard targets = board.attacked(from) & ~board.occupied();
 
-				move.flags = 0;
-
 				for (Square to : BitboardIterator<Square>(targets))
 				{
-					move.to = to;
-					moves.push_back(move);
+					moves.push_back(Move(pieceType, from, to));
 				}
 			}
 		};
@@ -150,7 +133,91 @@ namespace Move_Gen
 			&& !(board.attacked(~toMove) & CantBeAttacked)
 			&& !(board.occupied() & CantBeOccupied))
 		{
-			moves.push_back(Move(KING, NO_SQUARE, NO_SQUARE, side == KINGSIDE ? KINGSIDE_CASTLE : QUEENSIDE_CASTLE));
+			moves.push_back(Move::castle(toMove, side));
 		}
 	}
+
+	template <Color toMove, bool quiescence>
+	class MoveGenerator
+	{
+	public:
+		MoveGenerator(const Board & board, const Move * hash_move) : _board(board), _hash_move(hash_move), _stage(HASH_MOVE), _pos(0)
+		{
+			if (hash_move == nullptr)
+				next();
+		}
+
+		const Move & curr() const
+		{
+			if (_stage == HASH_MOVE)
+				return *_hash_move;
+			else
+				return _moves[_pos];
+		}
+
+		void next()
+		{
+			if (_stage == HASH_MOVE)
+			{
+				genMoves<toMove, quiescence>(_board, _moves);
+
+				std::vector<int> scores;
+				scores.resize(_moves.size());
+
+				for (int i = 0; i < _moves.size(); ++i)
+				{
+					if (_moves[i].isPromotion())
+						scores[i] = Evaluation::PieceValue[_moves[i].promotion()];
+					else
+					{
+						PieceType victim = toPieceType(_board.pieceAt(_moves[i].to()));
+						PieceType attacker = toPieceType(_board.pieceAt(_moves[i].from()));
+						scores[i] = Evaluation::PieceValue[victim] - Evaluation::PieceValue[attacker];
+					}
+				}
+
+				for (int i = 0; i < (int)_moves.size() - 1; ++i)
+				{
+					int max = 0;
+					for (int j = i; j < _moves.size(); ++j)
+					{
+						if (scores[j] > scores[max])
+							max = j;
+					}
+
+					std::swap(scores[i], scores[max]);
+					std::swap(_moves[i], _moves[max]);
+				}
+
+				if (_hash_move != nullptr)
+				{
+					auto it = std::find(_moves.begin(), _moves.end(), *_hash_move);
+					if (it != _moves.end())
+						_moves.erase(it);
+				}
+
+				_stage = OTHER;
+			}
+			else
+				++_pos;
+		}
+
+		bool end() const
+		{
+			return _stage != HASH_MOVE && _pos >= _moves.size();
+		}
+
+	private:
+		enum Stage
+		{
+			HASH_MOVE,
+			OTHER
+		};
+
+		const Board & _board;
+		const Move *_hash_move;
+		int _stage;
+		std::vector<Move> _moves;
+		int _pos;
+	};
 }

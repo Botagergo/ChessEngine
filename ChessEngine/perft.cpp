@@ -53,11 +53,11 @@ int Perft::_perft(Board &board, int depth, int &captures, int &en_passants, int 
 
 		if (board_copy.makeMove(move))
 		{
-			captures += move.flags & CAPTURE ? 1 : 0;
-			en_passants += move.flags & EN_PASSANT ? 1 : 0;
-			king_castles += move.flags & KINGSIDE_CASTLE ? 1 : 0;
-			queen_castles += move.flags & QUEENSIDE_CASTLE ? 1 : 0;
-			promotions += move.promotion != NO_PIECE ? 1 : 0;
+			captures += move.isCapture() ? 1 : 0;
+			en_passants += move.isEnPassant() ? 1 : 0;
+			king_castles += move.isCastle(KINGSIDE) ? 1 : 0;
+			queen_castles += move.isCastle(QUEENSIDE)? 1 : 0;
+			promotions += move.isPromotion() ? 1 : 0;
 
 			score += _perft(board_copy, depth - 1, captures, en_passants, king_castles, queen_castles, promotions);
 		}

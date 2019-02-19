@@ -120,23 +120,33 @@
     <ClInclude Include="attacks.h" />
     <ClInclude Include="bitboard.h" />
     <ClInclude Include="board.h" />
+    <ClInclude Include="config.h" />
     <ClInclude Include="constants.h" />
     <ClInclude Include="attack_tables.h" />
     <ClInclude Include="bitboard_iterator.h" />
     <ClInclude Include="move.h" />
     <ClInclude Include="movegen.h" />
     <ClInclude Include="perft.h" />
+    <ClInclude Include="piece_square_table.h" />
+    <ClInclude Include="search.h" />
+    <ClInclude Include="transposition_table.h" />
     <ClInclude Include="types.h" />
     <ClInclude Include="util.h" />
+    <ClInclude Include="zobrist.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="attacks.cpp" />
     <ClCompile Include="board.cpp" />
     <ClCompile Include="constants.cpp" />
     <ClCompile Include="attack_tables.cpp" />
+    <ClCompile Include="evaluation.h" />
+    <ClCompile Include="move.cpp" />
+    <ClCompile Include="movegen.cpp" />
     <ClCompile Include="perft.cpp" />
+    <ClCompile Include="search.cpp" />
     <ClCompile Include="types.cpp" />
     <ClCompile Include="util.cpp" />
+    <ClCompile Include="zobrist.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -16,28 +16,21 @@ public:
 	FenParseError(const char *msg) : exception(msg) {}
 };
 
-class MoveParseError : std::exception
-{
-public:
-	MoveParseError(const char *msg) : exception(msg) {}
-};
-
 class Board
 {
 public:
 	static Board fromFen(const std::string &fen);
+	Board();
 
 	std::string fen() const;
-	Move parseMove(std::string str) const;
-	std::string moveToString(const Move &move) const;
 
 	void print(std::ostream &os) const;
 
 	Color toMove() const;
 
-	bool makeMove(const Move &move);
+	bool makeMove(Move move);
 
-	Bitboard pieces(Color color, Piece piece) const;
+	Bitboard pieces(Color color, PieceType piece) const;
 	Piece pieceAt(Square square) const;
 
 	Bitboard occupied(Color color) const;
@@ -56,18 +49,21 @@ public:
 	int halfmoveClock() const;
 	int fullmoveNum() const;
 
+	unsigned long long hash() const;
+
 	const static int AllCastlingRights;
 	const static int CastleFlag[COLOR_NB][SIDE_NB];
-private:
-	Board();
 
-	void _castle(int side);
-	void _updateCastlingRights(const Move &m);
-	void _makeNormalMove(const Move &m);
+	unsigned char _castling_rights;
+
+private:
+	void _castle(Side side);
+	void _updateCastlingRights(Move move);
+	void _makeNormalMove(Move move);
 
 	Color _to_move;
 
-	std::array<std::array<Bitboard, PIECE_NB>, COLOR_NB> _pieces;
+	std::array<std::array<Bitboard, PIECE_TYPE_NB>, COLOR_NB> _pieces;
 	std::array<Piece, SQUARE_NB> _piece_list;
 	std::array<Bitboard, COLOR_NB> _occupied;
 	std::array<Bitboard, SQUARE_NB> _attackedByPiece;
@@ -75,10 +71,13 @@ private:
 
 	Square _en_passant_target;
 	Square _en_passant_capture_target;
-	unsigned char _castling_rights;
 
 	int _halfmove_clock;
 	int _fullmove_num;
+
+	std::array<Score, COLOR_NB> _material;
+
+	unsigned long long _hash;
 
 	void _initOccupied();
 	void _initPieceList();

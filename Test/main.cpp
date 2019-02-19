@@ -3,16 +3,22 @@
 #include "board.h"
 #include "bitboard_iterator.h"
 #include "perft.h"
+#include "zobrist.h"
 
 #include <iostream>
 #include <map>
+#include <search.h>
 
 using namespace std;
 
 const std::string start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
+void setoptionReceived(std::string name, std::string value);
 void perft_received(Board board, int depth, std::vector<Move> moves, bool per_move, bool full);
 void printPerftRes(Perft::PerftResult res);
+
+Board board;
+int maxdepth = 6;
 
 enum class command
 {
@@ -30,10 +36,18 @@ enum class command
 	infinite
 };
 
+struct CommandParam
+{
+	std::string str = "";
+	int number = 0;
+
+};
+
 int main(int argc, char *argv[])
 {
 	initSquareBB();
 	initAttackTables();
+	Zobrist::initZobristHashing();
 
 	std::string line;
 	auto   running = true;
@@ -44,13 +58,20 @@ int main(int argc, char *argv[])
 		iss >> std::skipws >> token;
 		if (token == "uci")
 		{
+			std::cout << "option name maxdepth type string" << std::endl;
+			std::cout << "uciok" << std::endl;
 		}
 		else if (token == "debug")
 		{
 			iss >> token;
+			if (token == "on")
+				Search::debug = true;
+			else if (token == "off")
+				Search::debug = false;
 		}
 		else if (token == "isready")
 		{
+			std::cout << "readyok" << std::endl;
 		}
 		else if (token == "setoption")
 		{
@@ -60,6 +81,8 @@ int main(int argc, char *argv[])
 				name += std::string(" ", name.empty() ? 0 : 1) + token;
 			while (iss >> token)
 				value += std::string(" ", value.empty() ? 0 : 1) + token;
+
+			setoptionReceived(name, value);
 		}
 		else if (token == "register")
 		{
@@ -80,7 +103,7 @@ int main(int argc, char *argv[])
 		}
 		else if (token == "position")
 		{
-			std::string              fen;
+			std::string fen;
 			std::vector<std::string> moves;
 			iss >> token;
 			if (token == "startpos")
@@ -95,39 +118,50 @@ int main(int argc, char *argv[])
 				continue;
 			while (iss >> token)
 				moves.push_back(token);
+
+			board = Board::fromFen(fen);
+			for (std::string move : moves)
+			{
+				board.makeMove(Move::parse(board, move));
+			}
 		}
 		else if (token == "go")
 		{
-			std::map<command, std::string> commands;
+			std::map<command, CommandParam> commands;
+			commands[command::depth].number = maxdepth;
+
 			while (iss >> token)
 				if (token == "searchmoves")
 					while (iss >> token)
-						commands[command::search_moves] += std::string(" ", commands[command::search_moves].empty() ? 0 : 1) + token;
+						commands[command::search_moves].str += std::string(" ", commands[command::search_moves].str.empty() ? 0 : 1) + token;
 				else if (token == "ponder")
 					commands[command::ponder];
 				else if (token == "wtime")
-					iss >> commands[command::white_time];
+					iss >> commands[command::white_time].number;
 				else if (token == "btime")
-					iss >> commands[command::black_time];
+					iss >> commands[command::black_time].number;
 				else if (token == "winc")
-					iss >> commands[command::white_increment];
+					iss >> commands[command::white_increment].number;
 				else if (token == "binc")
-					iss >> commands[command::black_increment];
+					iss >> commands[command::black_increment].number;
 				else if (token == "movestogo")
-					iss >> commands[command::moves_to_go];
+					iss >> commands[command::moves_to_go].number;
 				else if (token == "depth")
-					iss >> commands[command::depth];
+					iss >> commands[command::depth].number;
 				else if (token == "nodes")
-					iss >> commands[command::nodes];
+					iss >> commands[command::nodes].number;
 				else if (token == "mate")
-					iss >> commands[command::mate];
+					iss >> commands[command::mate].number;
 				else if (token == "move_time")
-					iss >> commands[command::move_time];
+					iss >> commands[command::move_time].number;
 				else if (token == "infinite")
 					commands[command::infinite];
+
+			Search::startSearch(board, commands[command::depth].number);
 		}
 		else if (token == "stop")
 		{
+			Search::stop = true;
 		}
 		else if (token == "ponderhit")
 		{
@@ -135,6 +169,9 @@ int main(int argc, char *argv[])
 		else if (token == "quit")
 		{
 			running = false;
+		}
+		else if (token == "stats")
+		{
 		}
 		else if (token == "perft")
 		{
@@ -187,7 +224,7 @@ int main(int argc, char *argv[])
 
 			for (auto move : str_moves)
 			{
-				moves.push_back(board.parseMove(move));
+				moves.push_back(Move::parse(board, move));
 			}
 
 			perft_received(board, depth, moves, per_move, full);
@@ -196,6 +233,15 @@ int main(int argc, char *argv[])
 		{
 			std::cout << "Unrecognized command: " << line << std::endl;
 		}
+	}
+}
+
+void setoptionReceived(std::string name, std::string value)
+{
+	if (name == "maxdepth")
+	{
+		std::stringstream ss(value);
+		ss >> maxdepth;
 	}
 }
 
@@ -216,7 +262,7 @@ void perft_received(Board board, int depth, std::vector<Move> moves, bool per_mo
 		auto res = Perft::perftPerMove(board, depth);
 		for (auto p : res)
 		{
-			std::cout << board.moveToString(p.first) << ":\t";
+			std::cout << p.first.toAlgebraic() << ":\t";
 
 			if (full)
 			{

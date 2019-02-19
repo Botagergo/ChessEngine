@@ -64,4 +64,4 @@ Bitboard queenAttacks(Square square, Bitboard occupied);
 
 Bitboard kingAttacks(Square king);
 
-Bitboard pieceAttacks(Square square, Piece piece_type, Bitboard occupied);
+Bitboard pieceAttacks(Square square, PieceType piece_type, Bitboard occupied);

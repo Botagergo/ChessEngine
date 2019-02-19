@@ -33,7 +33,7 @@ Bitboard kingAttacks(Square king)
 	return KingAttackTable[king];
 }
 
-Bitboard pieceAttacks(Square square, Piece piece_type, Bitboard occupied)
+Bitboard pieceAttacks(Square square, PieceType piece_type, Bitboard occupied)
 {
 	assert(piece_type != PAWN);
 

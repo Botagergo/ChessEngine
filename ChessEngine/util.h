@@ -47,4 +47,14 @@ namespace Util
 	Square bitScanForwardPop(Bitboard &b);
 
 	Square bitScanReverse(Bitboard bb);
+
+	int popCount(Bitboard b);
+
+	File getFile(Square square);
+
+	template <Color color>
+	Square relativeSquare(Square square)
+	{
+		return Square(square ^ (56 * color));
+	}
 }

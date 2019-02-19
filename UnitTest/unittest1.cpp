@@ -6,11 +6,15 @@
 #include "bitboard_iterator.h"
 #include "board.h"
 #include "util.h"
+#include "zobrist.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+using namespace std;
 
 template<> inline std::wstring  Microsoft::VisualStudio::CppUnitTestFramework::ToString<Color>(const Color& c) { RETURN_WIDE_STRING((int)c); }
 template<> inline std::wstring  Microsoft::VisualStudio::CppUnitTestFramework::ToString<Square>(const Square& s) { RETURN_WIDE_STRING((int)s); }
+template<> inline std::wstring  Microsoft::VisualStudio::CppUnitTestFramework::ToString<Piece>(const Piece& p) { RETURN_WIDE_STRING((int)p); }
+template<> inline std::wstring  Microsoft::VisualStudio::CppUnitTestFramework::ToString<PieceType>(const PieceType& p) { RETURN_WIDE_STRING((int)p); }
 
 namespace UnitTests
 {
@@ -37,6 +41,48 @@ namespace UnitTests
 		{
 			Assert::AreEqual(Util::verticalFlip(C64(0)), C64(0));
 			Assert::AreEqual(Util::verticalFlip(C64(0x1000200020020004)), C64(0x400022000200010));
+		}
+
+		TEST_METHOD(pieceTest)
+		{
+			Assert::AreEqual(PAWN, toPieceType(WHITE_PAWN));
+			Assert::AreEqual(PAWN, toPieceType(BLACK_PAWN));
+			Assert::AreEqual(KNIGHT, toPieceType(WHITE_KNIGHT));
+			Assert::AreEqual(KNIGHT, toPieceType(BLACK_KNIGHT));
+			Assert::AreEqual(BISHOP, toPieceType(WHITE_BISHOP));
+			Assert::AreEqual(BISHOP, toPieceType(BLACK_BISHOP));
+			Assert::AreEqual(ROOK, toPieceType(WHITE_ROOK));
+			Assert::AreEqual(ROOK, toPieceType(BLACK_ROOK));
+			Assert::AreEqual(QUEEN, toPieceType(WHITE_QUEEN));
+			Assert::AreEqual(QUEEN, toPieceType(BLACK_QUEEN));
+			Assert::AreEqual(KING, toPieceType(WHITE_KING));
+			Assert::AreEqual(KING, toPieceType(BLACK_KING));
+
+			Assert::AreEqual(BLACK_PAWN, toPiece(PAWN, BLACK));
+			Assert::AreEqual(BLACK_KNIGHT, toPiece(KNIGHT, BLACK));
+			Assert::AreEqual(BLACK_BISHOP, toPiece(BISHOP, BLACK));
+			Assert::AreEqual(WHITE_ROOK, toPiece(ROOK, WHITE));
+			Assert::AreEqual(WHITE_QUEEN, toPiece(QUEEN, WHITE));
+			Assert::AreEqual(BLACK_KING, toPiece(KING, BLACK));
+
+			Assert::AreEqual('p', pieceTypeToChar(PAWN));
+			Assert::AreEqual('q', pieceTypeToChar(QUEEN));
+			Assert::AreEqual('n', pieceTypeToChar(KNIGHT));
+
+			Assert::AreEqual('Q', pieceToChar(WHITE_QUEEN));
+			Assert::AreEqual('R', pieceToChar(WHITE_ROOK));
+			Assert::AreEqual('p', pieceToChar(BLACK_PAWN));
+			Assert::AreEqual('n', pieceToChar(BLACK_KNIGHT));
+
+			Assert::AreEqual(BLACK_KNIGHT, charToPiece('n'));
+			Assert::AreEqual(BLACK_BISHOP, charToPiece('b'));
+			Assert::AreEqual(WHITE_QUEEN, charToPiece('Q'));
+			Assert::AreEqual(WHITE_KING, charToPiece('K'));
+
+			Assert::AreEqual(KNIGHT, charToPieceType('n'));
+			Assert::AreEqual(BISHOP, charToPieceType('B'));
+			Assert::AreEqual(ROOK, charToPieceType('R'));
+			Assert::AreEqual(QUEEN, charToPieceType('q'));
 		}
 
 		TEST_METHOD(pawnPushTargetsTest)
@@ -128,6 +174,32 @@ namespace UnitTests
 			Assert::IsTrue(std::equal(bitboards.begin(), bitboards.end(), expected2.begin()));
 		}
 
+		TEST_METHOD(Move_test)
+		{
+			initSquareBB();
+			initAttackTables();
+
+			Move move(PAWN, A2, A4, FLAG_DOUBLE_PUSH);
+
+			Assert::IsTrue(move.from() == A2);
+			Assert::IsTrue(move.to() == A4);
+			Assert::IsTrue(move.pieceType() == PAWN);
+			Assert::IsTrue(move.isDoublePush());
+			Assert::IsFalse(move.isEnPassant());
+			Assert::IsFalse(move.isPromotion());
+
+			Board board = Board::fromFen("r1bqk2r/ppp2ppp/2n1pn2/8/1bBP4/2N1PN2/PP3PPP/R1BQ1RK1 b kq - 3 7 ");
+			move = Move::parse(board, "b4c3");
+
+			Assert::IsTrue(move.from() == B4);
+			Assert::IsTrue(move.to() == C3);
+			Assert::IsTrue(move.pieceType() == BISHOP);
+			Assert::IsTrue(move.isCapture());
+			Assert::IsFalse(move.isDoublePush());
+			Assert::IsFalse(move.isEnPassant());
+			Assert::IsFalse(move.isPromotion());
+		}
+
 		TEST_METHOD(Board_fromFenTest) //TODO: add more tests
 		{
 			initSquareBB();
@@ -184,6 +256,43 @@ namespace UnitTests
 				{
 					Board::fromFen(fen);
 				});
+			}
+		}
+
+		TEST_METHOD(zobristTest)
+		{
+			initSquareBB();
+			initAttackTables();
+			Zobrist::initZobristHashing();
+
+			vector<string> fen1 = { "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ",
+				"r1bqkbnr/ppppp1pp/2n5/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3"};
+			vector<vector<string>> moves = {
+				{"e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "g8f6", "e1g1", "d7d6", "b1c3", "f8e7", "d2d3", "e8g8"},
+				{"g1f3", "g8f6", "f3g1", "f6g8"}
+			};
+			vector<string> fen2 = { "r1bq1rk1/ppp1bppp/2np1n2/4p3/2B1P3/2NP1N2/PPP2PPP/R1BQ1RK1 w - - 1 7 ",
+				"r1bqkbnr/ppppp1pp/2n5/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3"};
+
+			vector<bool> equals = { true, false };
+
+			for (int i = 0; i < fen1.size(); ++i)
+			{
+				Board board = Board::fromFen(fen1[i]);
+
+				for (std::string move : moves[i])
+				{
+					board.makeMove(Move::parse(board, move));
+				}
+
+				unsigned long long hash1 = board.hash();
+				board = Board::fromFen(fen2[i]);
+				unsigned long long hash2 = board.hash();
+
+				if (equals[i])
+					Assert::AreEqual(hash1, hash2);
+				else
+					Assert::AreNotEqual(hash1, hash2);
 			}
 		}
 	};

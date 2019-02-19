@@ -17,7 +17,7 @@ enum Rank {
 };
 
 enum Color {
-	WHITE, BLACK, COLOR_NB
+	NO_COLOR = -1, WHITE, BLACK, COLOR_NB
 };
 
 const Color Colors[] = { WHITE, BLACK };
@@ -32,12 +32,34 @@ enum Side
 	KINGSIDE, QUEENSIDE, SIDE_NB
 };
 
-enum Piece {
-	NO_PIECE = -1, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, PIECE_NB
+enum PieceType {
+	NO_PIECE_TYPE = -1, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, PIECE_TYPE_NB
 };
 
-const Piece Pieces[] = { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
-const Piece MinorMajorPieces[] = { KNIGHT, BISHOP, ROOK, QUEEN };
+enum Piece {
+	NO_PIECE = -1,
+	WHITE_PAWN, BLACK_PAWN,
+	WHITE_KNIGHT, BLACK_KNIGHT,
+	WHITE_BISHOP, BLACK_BISHOP,
+	WHITE_ROOK, BLACK_ROOK,
+	WHITE_QUEEN, BLACK_QUEEN,
+	WHITE_KING, BLACK_KING,
+	PIECE_NB
+};
+
+PieceType toPieceType(Piece piece);
+Piece toPiece(PieceType piece_type, Color color);
+
+PieceType charToPieceType(char c);
+Piece charToPiece(char c);
+
+char pieceTypeToChar(PieceType p);
+char pieceToChar(Piece p);
+
+Color pieceColor(Piece piece);
+
+const PieceType PieceTypes[] = { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
+const PieceType MinorMajorPieces[] = { KNIGHT, BISHOP, ROOK, QUEEN };
 
 enum Square {
 	NO_SQUARE = -1,
@@ -63,9 +85,37 @@ const Square Squares [] = {
 	A8, B8, C8, D8, E8, F8, G8, H8,
 };
 
-Piece charToPiece(char c);
-char pieceToChar(Piece p);
+const Side Sides[] = {
+	KINGSIDE, QUEENSIDE
+};
+
+const File Files[] = {
+	A_FILE, B_FILE, C_FILE, D_FILE, E_FILE, F_FILE, G_FILE, H_FILE, FILE_NB
+};
+
 Square parseSquare(const std::string &s);
 
 Piece operator++(Piece &piece);
+PieceType operator++(PieceType &piece);
+
 Square operator++(Square &square);
+
+struct Score
+{
+	Score(int mg = 0, int eg = 0) : mg(mg), eg(eg) {}
+
+	int mg;
+	int eg;
+
+	void operator+=(const Score &s) { mg += s.mg; eg += s.eg; }
+	void operator-=(const Score &s) { mg -= s.mg; eg -= s.eg; }
+
+	Score operator-() const { return Score(-mg, -eg); }
+	Score operator*(double d) const { return Score((int)(mg * d), (int)(eg * d)); }
+};
+
+enum ScoreConstant
+{
+	MAX_SCORE = 32768,
+	INVALID_SCORE = 32769
+};

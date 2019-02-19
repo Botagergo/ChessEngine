@@ -50,3 +50,12 @@ Square Util::bitScanReverse(Bitboard bb)
 #endif
 	return static_cast<Square>(bit);
 }
+
+int Util::popCount(Bitboard b) {
+	return static_cast<int>(_mm_popcnt_u64(b));
+}
+
+File Util::getFile(Square square)
+{
+	return (File)(square % 8);
+}
