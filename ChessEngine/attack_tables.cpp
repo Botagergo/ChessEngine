@@ -2,6 +2,10 @@
 #include "constants.h"
 #include "util.h"
 
+#include <iostream>
+
+using namespace Constants;
+
 Bitboard KnightAttackTable[SQUARE_NB] = {};
 Bitboard KingAttackTable[SQUARE_NB] = {};
 Bitboard SlidingAttackTable[DIRECTION_NB][SQUARE_NB] = {};
@@ -137,4 +141,6 @@ void initAttackTables() {
 			SlidingAttackTable[NORTHEAST][rank + file] = n;
 		}
 	}
+
+	std::cout << SlidingAttackTable[NORTH][A1] << std::endl;
 }

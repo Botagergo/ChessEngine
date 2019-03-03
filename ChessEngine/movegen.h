@@ -7,12 +7,13 @@
 #include "board.h"
 #include "evaluation.h"
 #include "move.h"
+#include "see.h"
 #include "util.h"
 
-namespace Move_Gen
-{
-	//int getScore(const Board & board, const Move & move);
+using namespace Constants;
 
+namespace MoveGen
+{
 	template <Color toMove, bool quiescence>
 	void genMoves(const Board & board, std::vector<Move> & moves)
 	{
@@ -40,7 +41,7 @@ namespace Move_Gen
 			Bitboard targets = board.attacked(from) & board.occupied(~toMove);
 			for (Square to : BitboardIterator<Square>(targets))
 			{
-				if (SquareBB[to] & backRank(toMove))
+				if (SquareBB[to] & Util::backRank<toMove>())
 				{
 					moves.push_back(Move(PAWN, from, to, QUEEN,  FLAG_CAPTURE));
 					moves.push_back(Move(PAWN, from, to, ROOK,   FLAG_CAPTURE));
@@ -59,7 +60,7 @@ namespace Move_Gen
 				{
 					Square to = Util::bitScanForward(targets);
 
-					if (SquareBB[to] & backRank(toMove))
+					if (SquareBB[to] & Util::backRank<toMove>())
 					{
 						moves.push_back(Move(PAWN, from, to, QUEEN));
 						moves.push_back(Move(PAWN, from, to, ROOK));
@@ -137,87 +138,102 @@ namespace Move_Gen
 		}
 	}
 
+	int mvvlva(const Board & board, Move move);
+
+	template <Color toMove>
+	int pieceSquareEval(const Board & board, Move move)
+	{
+		return Evaluation::pieceSquareValue<toMove>(move.pieceType(), move.to()).mg
+			- Evaluation::pieceSquareValue<toMove>(move.pieceType(), move.from()).mg;
+	}
+
 	template <Color toMove, bool quiescence>
 	class MoveGenerator
 	{
 	public:
-		MoveGenerator(const Board & board, const Move * hash_move) : _board(board), _hash_move(hash_move), _stage(HASH_MOVE), _pos(0)
+		MoveGenerator(const Board & board, const Move hash_move) : _board(board), _hash_move(hash_move), _pos(0)
 		{
-			if (hash_move == nullptr)
-				next();
+			_moves.reserve(50);
+			if (!_hash_move.isValid())
+			{
+				genMoves<toMove, quiescence>(_board, _moves);
+				_getScores();
+				_selectNext();
+			}
 		}
 
-		const Move & curr() const
+		Move curr() const
 		{
-			if (_stage == HASH_MOVE)
-				return *_hash_move;
+			if (_hash_move.isValid())
+				return _hash_move;
 			else
 				return _moves[_pos];
 		}
 
 		void next()
 		{
-			if (_stage == HASH_MOVE)
+			if (_hash_move.isValid())
 			{
 				genMoves<toMove, quiescence>(_board, _moves);
-
-				std::vector<int> scores;
-				scores.resize(_moves.size());
-
-				for (int i = 0; i < _moves.size(); ++i)
-				{
-					if (_moves[i].isPromotion())
-						scores[i] = Evaluation::PieceValue[_moves[i].promotion()];
-					else
-					{
-						PieceType victim = toPieceType(_board.pieceAt(_moves[i].to()));
-						PieceType attacker = toPieceType(_board.pieceAt(_moves[i].from()));
-						scores[i] = Evaluation::PieceValue[victim] - Evaluation::PieceValue[attacker];
-					}
-				}
-
-				for (int i = 0; i < (int)_moves.size() - 1; ++i)
-				{
-					int max = 0;
-					for (int j = i; j < _moves.size(); ++j)
-					{
-						if (scores[j] > scores[max])
-							max = j;
-					}
-
-					std::swap(scores[i], scores[max]);
-					std::swap(_moves[i], _moves[max]);
-				}
-
-				if (_hash_move != nullptr)
-				{
-					auto it = std::find(_moves.begin(), _moves.end(), *_hash_move);
-					if (it != _moves.end())
-						_moves.erase(it);
-				}
-
-				_stage = OTHER;
+				_moves.erase(std::find(_moves.begin(), _moves.end(), _hash_move));
+				_hash_move = Move();
+				_getScores();
 			}
 			else
 				++_pos;
+
+			if(_pos < _moves.size())
+				_selectNext();
 		}
 
-		bool end() const
+		bool end()
 		{
-			return _stage != HASH_MOVE && _pos >= _moves.size();
+			return !_hash_move.isValid() && _pos >= _moves.size()/*
+				|| quiescence && _scores[_pos] < 0)*/;
 		}
 
 	private:
-		enum Stage
+		void _getScores()
 		{
-			HASH_MOVE,
-			OTHER
-		};
+			_scores.resize(_moves.size());
+			for (int i = 0; i < _moves.size(); ++i)
+			{
+				if (_moves[i].isPromotion())
+					_scores[i] = Evaluation::PieceValue[_moves[i].promotion()].mg;
+				else if (_moves[i].isCapture())
+				{
+					if (quiescence)
+						_scores[i] = mvvlva(_board, _moves[i]);
+					else
+						_scores[i] = see<toMove>(_board, _moves[i]);
+				}
+				else
+				{
+					_scores[i] = pieceSquareEval<toMove>(_board, _moves[i]);
+				}
+			}
+		}
+
+		void _selectNext()
+		{
+			int max = _pos;
+			for (int i = _pos; i < _moves.size(); ++i)
+			{
+				if (_scores[i] > _scores[max])
+					max = i;
+			}
+
+			if (max != _pos)
+			{
+				std::swap(_scores[_pos], _scores[max]);
+				std::swap(_moves[_pos], _moves[max]);
+			}
+		}
 
 		const Board & _board;
-		const Move *_hash_move;
-		int _stage;
+		Move _hash_move;
 		std::vector<Move> _moves;
+		std::vector<int> _scores;
 		int _pos;
 	};
 }

@@ -5,11 +5,15 @@
 #include "bitboard.h"
 #include "bitboard_iterator.h"
 #include "board.h"
+#include "evaluation.h"
+#include "see.h"
 #include "util.h"
 #include "zobrist.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace std;
+using namespace Evaluation;
+using namespace Constants;
 
 template<> inline std::wstring  Microsoft::VisualStudio::CppUnitTestFramework::ToString<Color>(const Color& c) { RETURN_WIDE_STRING((int)c); }
 template<> inline std::wstring  Microsoft::VisualStudio::CppUnitTestFramework::ToString<Square>(const Square& s) { RETURN_WIDE_STRING((int)s); }
@@ -294,6 +298,46 @@ namespace UnitTests
 				else
 					Assert::AreNotEqual(hash1, hash2);
 			}
+		}
+
+		TEST_METHOD(see_Test)
+		{
+			initSquareBB();
+			initAttackTables();
+			Zobrist::initZobristHashing();
+
+			Board board = Board::fromFen("rnb1kbnr/pppp1ppp/8/4p1q1/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3 ");
+
+			Move move = Move::parse(board, "f3g5");
+			Assert::AreEqual(PieceValue[QUEEN].mg, see<WHITE>(board, Move::parse(board, "f3g5")));
+
+			board = Board::fromFen("rnb1k1nr/ppppbppp/8/4p1q1/4P3/2N2N2/PPPP1PPP/R1BQKB1R w KQkq - 4 4 ");
+			Assert::AreEqual(PieceValue[QUEEN].mg - PieceValue[KNIGHT].mg, see<WHITE>(board, Move::parse(board, "f3g5")));
+
+			board = Board::fromFen("rnb1k1nr/1pppbppp/p7/4p1q1/4P3/2NP1N2/PPP2PPP/R1BQKB1R w KQkq - 0 5 ");
+			Assert::AreEqual(PieceValue[QUEEN].mg - PieceValue[KNIGHT].mg + PieceValue[BISHOP].mg, see<WHITE>(board, Move::parse(board, "f3g5")));
+
+			board = Board::fromFen("rnb1k1nr/1pppb1pp/p4p2/4p1q1/4P3/2NP1N2/PPPQ1PPP/R1B1KB1R w KQkq - 0 6 ");
+			Assert::AreEqual(PieceValue[QUEEN].mg - PieceValue[KNIGHT].mg, see<WHITE>(board, Move::parse(board, "f3g5")));
+
+			board = Board::fromFen("r2qkb1r/p1pbpppp/1pnp1n2/1B6/Q2P4/2P1P3/PP3PPP/RNB1K1NR w KQkq - 0 6 ");
+			Assert::AreEqual(PieceValue[KNIGHT].mg, see<WHITE>(board, Move::parse(board, "b5c6")));
+		}
+
+		TEST_METHOD(isPassedPawn_Test)
+		{
+			initSquareBB();
+
+			Assert::IsFalse(isPassedPawn<WHITE>(D5, 0x8000000000000));
+			Assert::IsFalse(isPassedPawn<WHITE>(D5, 0x4000000000000));
+			Assert::IsFalse(isPassedPawn<WHITE>(D5, 0x40000000000));
+			Assert::IsTrue(isPassedPawn<WHITE>(D5, 0x400000000));
+
+
+			Assert::IsFalse(isPassedPawn<BLACK>(D4, 0x800));
+			Assert::IsFalse(isPassedPawn<BLACK>(D4, 0x400));
+			Assert::IsFalse(isPassedPawn<BLACK>(D4, 0x40000));
+			Assert::IsTrue(isPassedPawn<BLACK>(D4, 0x4000000));
 		}
 	};
 }

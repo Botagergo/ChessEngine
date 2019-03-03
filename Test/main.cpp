@@ -170,8 +170,9 @@ int main(int argc, char *argv[])
 		{
 			running = false;
 		}
-		else if (token == "stats")
+		else if (token == "eval")
 		{
+			std::cout << Evaluation::evaluate<WHITE>(board).mg << std::endl;
 		}
 		else if (token == "perft")
 		{

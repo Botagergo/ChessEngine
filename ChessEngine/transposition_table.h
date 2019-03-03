@@ -14,15 +14,16 @@ enum NodeType
 struct TTEntry
 {
 	TTEntry(unsigned long long hash, int depth, int score, Move move, NodeType nodeType) :
-		hash(hash), depth(depth), score(score), move(move), nodeType(nodeType) {}
+		hash(hash), depth(depth), score(score), move(move), nodeType(nodeType), valid(true) {}
 
-	TTEntry() {}
+	TTEntry() : valid(false) {}
 
 	unsigned long long hash;
 	int depth;
 	int score;
 	Move move;
 	NodeType nodeType;
+	bool valid;
 };
 
 class TranspositionTable
@@ -54,14 +55,21 @@ public:
 	void insertEntry(unsigned long long hash, int depth, int score, Move move, NodeType nodeType)
 	{
 		TTEntry *entry = _getEntry(hash);
-		*entry = TTEntry(hash, depth, score, move, nodeType);
+
+		if (!entry->valid)
+		{
+			*entry = TTEntry(hash, depth, score, move, nodeType);
+			++_entry_count;
+		}
+		else if(entry->depth < depth)
+			*entry = TTEntry(hash, depth, score, move, nodeType);
 	}
 
-	std::pair<int, Move*> probe(unsigned long long hash, int depth, int alpha, int beta)
+	std::pair<int, Move> probe(unsigned long long hash, int depth, int alpha, int beta)
 	{
 		assert(hash != 0);
 
-		std::pair<int, Move*> pair = std::make_pair(INVALID_SCORE, nullptr);
+		std::pair<int, Move> pair = std::make_pair(SCORE_INVALID, Move());
 		TTEntry *entry = _getEntry(hash);
 
 		if (entry->hash == hash)
@@ -69,21 +77,21 @@ public:
 			if ((entry->nodeType == CUT_NODE || entry->nodeType == PV_NODE) && beta <= entry->score)
 			{
 				++_stats.cut_node_hits;
-				pair = std::make_pair(beta, &entry->move);
+				pair = std::make_pair(beta, entry->move);
 			}
 			else if ((entry->nodeType == ALL_NODE || entry->nodeType == PV_NODE) && entry->score <= alpha)
 			{
 				++_stats.all_node_hits;
-				pair = std::make_pair(alpha, nullptr);
+				pair = std::make_pair(alpha, Move());
 			}
 			else if (entry->nodeType == PV_NODE)
 			{
 				++_stats.pv_node_hits;
-				pair = std::make_pair(entry->score, &entry->move);
+				pair = std::make_pair(entry->score, entry->move);
 			}
 
 			if (entry->depth < depth)
-				pair.first = INVALID_SCORE;
+				pair.first = SCORE_INVALID;
 		}
 
 		return pair;
@@ -92,11 +100,17 @@ public:
 	void clear()
 	{
 		std::memset(_entries, 0, _size * sizeof(TTEntry));
+		_entry_count = 0;
 	}
 
 	const Stat *getStats() const
 	{
 		return &_stats;
+	}
+
+	double usage() const
+	{
+		return (double)_entry_count / (double)_size;
 	}
 
 private:
@@ -105,12 +119,7 @@ private:
 		return &_entries[hash % _size];
 	}
 
-	const TTEntry * _getEntry(unsigned long long hash) const
-	{
-		return &_entries[hash % _size];
-	}
-
 	size_t _size;
 	TTEntry *_entries;
-	int _replaceCount = 0;
+	size_t _entry_count = 0;
 };

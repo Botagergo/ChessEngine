@@ -158,7 +158,7 @@ Move Move::nullMove()
 std::string Move::toAlgebraic() const
 {
 	std::stringstream ss;
-	ss << SquareStr[from()] << SquareStr[to()];
+	ss << Constants::SquareStr[from()] << Constants::SquareStr[to()];
 	if (isPromotion())
 		ss << pieceTypeToChar(promotion());
 	return ss.str();

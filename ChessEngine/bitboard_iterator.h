@@ -86,5 +86,5 @@ typename BitboardIterator<Square>::iterator::value_type BitboardIterator<Square>
 template<>
 typename BitboardIterator<Bitboard>::iterator::value_type BitboardIterator<Bitboard>::iterator::operator*() const
 {
-	return Util::isolateLSB(_bb);
+	return Util::getLSB(_bb);
 }

@@ -90,7 +90,7 @@ const Side Sides[] = {
 };
 
 const File Files[] = {
-	A_FILE, B_FILE, C_FILE, D_FILE, E_FILE, F_FILE, G_FILE, H_FILE, FILE_NB
+	A_FILE, B_FILE, C_FILE, D_FILE, E_FILE, F_FILE, G_FILE, H_FILE
 };
 
 Square parseSquare(const std::string &s);
@@ -102,7 +102,7 @@ Square operator++(Square &square);
 
 struct Score
 {
-	Score(int mg = 0, int eg = 0) : mg(mg), eg(eg) {}
+	explicit Score(int mg = 0, int eg = 0) : mg(mg), eg(eg) {}
 
 	int mg;
 	int eg;
@@ -116,6 +116,9 @@ struct Score
 
 enum ScoreConstant
 {
-	MAX_SCORE = 32768,
-	INVALID_SCORE = 32769
+	SCORE_DRAW = 0,
+	SCORE_MIN_MATE = 32667,
+	SCORE_MAX_MATE = 32767,
+	SCORE_INFINITY = 32768,
+	SCORE_INVALID = 32769
 };

@@ -1,5 +1,7 @@
 #include "attacks.h"
 
+#include <iostream>
+
 Bitboard knightAttacks(Square knight)
 {
 	return KnightAttackTable[knight];

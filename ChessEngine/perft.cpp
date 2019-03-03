@@ -6,6 +6,7 @@
 
 Perft::PerftResult Perft::perft(Board board, int depth)
 {
+	std::cout << SlidingAttackTable[NORTH][A1] << std::endl;
 	Perft::PerftResult res = { 0 };
 	res.nodes = Perft::_perft(board, depth, res.captures, res.en_passants, res.king_castles, res.queen_castles, res.promotions);
 
@@ -18,9 +19,9 @@ std::vector<std::pair<Move, Perft::PerftResult> > Perft::perftPerMove(Board boar
 	std::vector<Move> moves;
 
 	if (board.toMove() == WHITE)
-		Move_Gen::genMoves<WHITE, false>(board, moves);
+		MoveGen::genMoves<WHITE, false>(board, moves);
 	else
-		Move_Gen::genMoves<BLACK, false>(board, moves);
+		MoveGen::genMoves<BLACK, false>(board, moves);
 
 	for (Move &move : moves)
 	{
@@ -43,9 +44,9 @@ int Perft::_perft(Board &board, int depth, int &captures, int &en_passants, int 
 	int score = 0;
 
 	if (board.toMove() == WHITE)
-		Move_Gen::genMoves<WHITE, false>(board, moves);
+		MoveGen::genMoves<WHITE, false>(board, moves);
 	else
-		Move_Gen::genMoves<BLACK, false>(board, moves);
+		MoveGen::genMoves<BLACK, false>(board, moves);
 
 	for (Move &move : moves)
 	{

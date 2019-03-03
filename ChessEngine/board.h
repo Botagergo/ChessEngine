@@ -68,14 +68,13 @@ private:
 	std::array<Bitboard, COLOR_NB> _occupied;
 	std::array<Bitboard, SQUARE_NB> _attackedByPiece;
 	std::array<Bitboard, COLOR_NB> _attackedByColor;
+	std::array<Bitboard, COLOR_NB> _pinnedPieces;
 
 	Square _en_passant_target;
 	Square _en_passant_capture_target;
 
 	int _halfmove_clock;
 	int _fullmove_num;
-
-	std::array<Score, COLOR_NB> _material;
 
 	unsigned long long _hash;
 

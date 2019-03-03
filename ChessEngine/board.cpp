@@ -4,6 +4,7 @@
 #include "bitboard_iterator.h"
 #include "board.h"
 #include "constants.h"
+#include "util.h"
 #include "zobrist.h"
 
 
@@ -38,8 +39,8 @@ Board Board::fromFen(const std::string &fen)
 	const static std::string to_move_regex = "(w|b)";
 	const static std::string castling_rights_regex = "(\\-|[KQkq]{1,4})";
 	const static std::string en_passant_square_regex = "(\\-|[a-h][1-8])";
-	const static std::string halfmove_clock_regex = "(0|[1-9][0-9]*)";
-	const static std::string fullmove_number_regex = "([1-9][0-9]*)";
+	const static std::string halfmove_clock_regex = "(0|[1-9][0-9]*)?";
+	const static std::string fullmove_number_regex = "([1-9][0-9]*)?";
 	const static std::string whitespace_regex = "\\s*";
 
 	const static std::string fen_regex = std::string("^") +
@@ -70,7 +71,7 @@ Board Board::fromFen(const std::string &fen)
 			{
 				Color color = pieceColor(piece);
 				Square square = (Square)((7 - i) * 8 + curr);
-				Bitboard b = SquareBB[square];
+				Bitboard b = Constants::SquareBB[square];
 				board._pieces[color][toPieceType(piece)] |= b;
 				++curr;
 			}
@@ -136,14 +137,14 @@ std::string Board::fen() const
 		for (int c = 0; c < 8; c++)
 		{
 			Square square = Square(r * 8 + c);
-			if (_piece_list[square] == NO_PIECE_TYPE)
+			if (_piece_list[square] == NO_PIECE)
 				empty++;
 
 			else
 			{
 				if (empty != 0)
 				{
-					fen << (char)empty + '0';
+					fen << (char)(empty + '0');
 					empty = 0;
 				}
 
@@ -151,7 +152,7 @@ std::string Board::fen() const
 			}
 		}
 		if (empty != 0)
-			fen << (char)empty + '0';
+			fen << (char)(empty + '0');
 
 		if (r > 0)
 			fen << '/';
@@ -179,7 +180,7 @@ std::string Board::fen() const
 	fen << " ";
 
 	if (enPassantTarget() != NO_SQUARE)
-		fen << SquareStr[enPassantTarget()];
+		fen << Constants::SquareStr[enPassantTarget()];
 	else
 		fen << '-';
 
@@ -252,6 +253,12 @@ bool Board::makeMove(Move move)
 
 		_updateCastlingRights(move);
 		_updateAttacked();
+	}
+	else if (_en_passant_target != NO_SQUARE)
+	{
+		_hash ^= Zobrist::EnPassantFileHash[Util::getFile(enPassantTarget())];
+		_en_passant_target = NO_SQUARE;
+		_en_passant_capture_target = NO_SQUARE;
 	}
 
 	// Ha sötét lép (Black == 1), akkor növeljük a lépésszámot
@@ -333,16 +340,13 @@ void Board::_makeNormalMove(Move move)
 	Piece piece = pieceAt(move.to());
 	Color o = ~toMove();
 
-	Bitboard b_from = SquareBB[move.from()];
-	Bitboard b_to = SquareBB[move.to()];
+	Bitboard b_from = Constants::SquareBB[move.from()];
+	Bitboard b_to = Constants::SquareBB[move.to()];
 
 	_pieces[toMove()][move.pieceType()] ^= b_from;
 	_occupied[toMove()] ^= b_from;
 	_occupied[toMove()] |= b_to;
 	_hash ^= Zobrist::PiecePositionHash[toMove()][move.pieceType()][move.from()];
-
-	if (enPassantTarget() != NO_SQUARE)
-		_hash ^= Zobrist::EnPassantFileHash[Util::getFile(enPassantTarget())];
 
 	if (move.isPromotion())
 	{
@@ -362,10 +366,12 @@ void Board::_makeNormalMove(Move move)
 		_hash ^= Zobrist::PiecePositionHash[o][toPieceType(piece)][move.to()];
 	}
 
+	Square en_passant_target = enPassantTarget();
+
 	if (move.isEnPassant())
 	{
 		assert(_en_passant_capture_target != NO_SQUARE);
-		Bitboard ep_ct_bb = SquareBB[_en_passant_capture_target];
+		Bitboard ep_ct_bb = Constants::SquareBB[_en_passant_capture_target];
 		_pieces[o][PAWN] ^= ep_ct_bb;
 		_piece_list[_en_passant_capture_target] = NO_PIECE;
 
@@ -376,6 +382,13 @@ void Board::_makeNormalMove(Move move)
 		_hash ^= Zobrist::PiecePositionHash[o][PAWN][enPassantCaptureTarget()];
 	}
 
+	if (en_passant_target != NO_SQUARE)
+	{
+		_hash ^= Zobrist::EnPassantFileHash[Util::getFile(enPassantTarget())];
+		_en_passant_target = NO_SQUARE;
+		_en_passant_capture_target = NO_SQUARE;
+	}
+
 	if (move.isDoublePush())
 	{
 		Square en_passant_target_square = Square(toMove() == WHITE ? move.to() - 8 : move.to() + 8);
@@ -383,11 +396,6 @@ void Board::_makeNormalMove(Move move)
 		_en_passant_capture_target = move.to();
 
 		_hash ^= Zobrist::EnPassantFileHash[Util::getFile(enPassantTarget())];
-	}
-	else
-	{
-		_en_passant_target = NO_SQUARE;
-		_en_passant_capture_target = NO_SQUARE;
 	}
 
 	_piece_list[move.from()] = NO_PIECE;
@@ -408,20 +416,20 @@ void Board::_castle(Side side)
 	Square r_from = toMove() == WHITE ? (side == KINGSIDE ? H1 : A1) : (side == KINGSIDE ? H8 : A8);
 	Square r_to = toMove() == WHITE ? (side == KINGSIDE ? F1 : D1) : (side == KINGSIDE ? F8 : D8);
 
-	_pieces[toMove()][KING] ^= SquareBB[k_from];
-	_pieces[toMove()][KING] |= SquareBB[k_to];
-	_pieces[toMove()][ROOK] ^= SquareBB[r_from];
-	_pieces[toMove()][ROOK] |= SquareBB[r_to];
+	_pieces[toMove()][KING] ^= Constants::SquareBB[k_from];
+	_pieces[toMove()][KING] |= Constants::SquareBB[k_to];
+	_pieces[toMove()][ROOK] ^= Constants::SquareBB[r_from];
+	_pieces[toMove()][ROOK] |= Constants::SquareBB[r_to];
 
 	_piece_list[k_from] = NO_PIECE;
 	_piece_list[k_to] = toPiece(KING, toMove());
 	_piece_list[r_from] = NO_PIECE;
 	_piece_list[r_to] = toPiece(ROOK, toMove());
 
-	_occupied[toMove()] ^= SquareBB[k_from];
-	_occupied[toMove()] |= SquareBB[k_to];
-	_occupied[toMove()] ^= SquareBB[r_from];
-	_occupied[toMove()] |= SquareBB[r_to];
+	_occupied[toMove()] ^= Constants::SquareBB[k_from];
+	_occupied[toMove()] |= Constants::SquareBB[k_to];
+	_occupied[toMove()] ^= Constants::SquareBB[r_from];
+	_occupied[toMove()] |= Constants::SquareBB[r_to];
 
 	_hash ^= Zobrist::PiecePositionHash[toMove()][KING][k_from];
 	_hash ^= Zobrist::PiecePositionHash[toMove()][KING][k_to];
@@ -429,10 +437,11 @@ void Board::_castle(Side side)
 	_hash ^= Zobrist::PiecePositionHash[toMove()][ROOK][r_to];
 
 	if (_en_passant_target != NO_SQUARE)
-		_hash ^= Zobrist::EnPassantFileHash[Util::getFile(_en_passant_target)];
-
-	_en_passant_target = NO_SQUARE;
-	_en_passant_capture_target = NO_SQUARE;
+	{
+		_hash ^= Zobrist::EnPassantFileHash[Util::getFile(enPassantTarget())];
+		_en_passant_target = NO_SQUARE;
+		_en_passant_capture_target = NO_SQUARE;
+	}
 }
 
 void Board::_initOccupied()
@@ -461,6 +470,7 @@ void Board::_initPieceList()
 void Board::_updateAttacked()
 {
 	_attackedByColor[WHITE] = _attackedByColor[BLACK] = 0;
+	_attackedByPiece = { 0 };
 
 	for (Color color : Colors)
 	{
@@ -474,11 +484,12 @@ void Board::_updateAttacked()
 					Bitboard attacks = 0;
 					PieceType piece_type = toPieceType(piece);
 
+
 					if (piece_type != PAWN)
 						attacks = pieceAttacks(square, piece_type, occupied());
 					else
 					{
-						Bitboard pawn = SquareBB[square];
+						Bitboard pawn = Constants::SquareBB[square];
 						if (occupied(WHITE) & pawn)
 							attacks = pawnAttacks<WHITE>(pawn);
 						else
@@ -487,7 +498,7 @@ void Board::_updateAttacked()
 
 					_attackedByPiece[square] = attacks;
 
-					if (SquareBB[square] & occupied(WHITE))
+					if (Constants::SquareBB[square] & occupied(WHITE))
 						_attackedByColor[WHITE] |= attacks;
 					else
 						_attackedByColor[BLACK] |= attacks;
@@ -496,8 +507,6 @@ void Board::_updateAttacked()
 		}
 	}
 }
-
-
 
 const int Board::AllCastlingRights = 15;
 const int Board::CastleFlag[COLOR_NB][SIDE_NB] = { { 1, 2 },{ 4, 8 } };

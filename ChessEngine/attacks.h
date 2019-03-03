@@ -65,3 +65,19 @@ Bitboard queenAttacks(Square square, Bitboard occupied);
 Bitboard kingAttacks(Square king);
 
 Bitboard pieceAttacks(Square square, PieceType piece_type, Bitboard occupied);
+
+template <Color color, PieceType pieceType>
+Bitboard pieceAttacks(Bitboard pieces, Bitboard occupied)
+{
+	if (pieceType == PAWN)
+		return pawnAttacks<color>(pieces);
+	else
+	{
+		Bitboard attacked = 0;
+		for (Square square : BitboardIterator<Square>(pieces))
+		{
+			attacked |= pieceAttacks<pieceType>(square, occupied);
+		}
+		return attacked;
+	}
+}

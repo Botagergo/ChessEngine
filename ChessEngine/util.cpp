@@ -4,58 +4,73 @@
 
 #pragma warning (disable : 4146)
 
-Bitboard Util::verticalFlip(Bitboard bb) {
-	return _byteswap_uint64(bb);
-}
-
-void Util::clearLSB(Bitboard &bb)
+namespace Util
 {
-	bb &= (bb - 1);
-}
+	Bitboard verticalFlip(Bitboard bb) {
+		return _byteswap_uint64(bb);
+	}
 
-Bitboard Util::isolateLSB(Bitboard b)
-{
-	return b & -b;
-}
+	void clearLSB(Bitboard &bb)
+	{
+		bb &= (bb - 1);
+	}
 
-Square Util::bitScanForward(Bitboard bb)
-{
-	unsigned long bit;
+	Bitboard getLSB(Bitboard b)
+	{
+		return b & -b;
+	}
+
+	Square bitScanForward(Bitboard bb)
+	{
+		assert(bb != 0);
+		unsigned long bit;
 #ifdef _M_AMD64
-	_BitScanForward64(&bit, bb);
+		_BitScanForward64(&bit, bb);
 #else
-	_BitScanForward(&bit, bb);
+		_BitScanForward(&bit, bb);
 #endif
-	return static_cast<Square>(bit);
-}
+		return static_cast<Square>(bit);
+	}
 
-Square Util::bitScanForwardPop(Bitboard &bb)
-{
-	Square square = bitScanForward(bb);
-	clearLSB(bb);
-	return square;
-}
+	Square bitScanForwardPop(Bitboard &bb)
+	{
+		Square square = bitScanForward(bb);
+		clearLSB(bb);
+		return square;
+	}
 
-Square Util::bitScanReverse(Bitboard bb)
-{
-	if (bb == 0)
-		return NO_SQUARE;
-
-	unsigned long bit;
+	Square bitScanReverse(Bitboard bb)
+	{
+		assert(bb != 0);
+		unsigned long bit;
 #ifdef _M_AMD64
 
-	_BitScanReverse64(&bit, bb);
+		_BitScanReverse64(&bit, bb);
 #else
-	_BitScanReverse(&bit, bb);
+		_BitScanReverse(&bit, bb);
 #endif
-	return static_cast<Square>(bit);
-}
+		return static_cast<Square>(bit);
+	}
 
-int Util::popCount(Bitboard b) {
-	return static_cast<int>(_mm_popcnt_u64(b));
-}
+	int popCount(Bitboard b) {
+		return static_cast<int>(_mm_popcnt_u64(b));
+	}
 
-File Util::getFile(Square square)
-{
-	return (File)(square % 8);
+	File getFile(Square square)
+	{
+		return (File)(square % 8);
+	}
+
+	Rank getRank(Square square)
+	{
+		return Rank(square >> 3);
+	}
+
+	Bitboard northFill(Bitboard bb)
+	{
+		bb |= bb >> 8;
+		bb |= bb >> 16;
+		bb |= bb >> 32;
+		return bb;
+	}
 }
