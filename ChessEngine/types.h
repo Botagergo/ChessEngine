@@ -116,6 +116,7 @@ struct Score
 
 enum ScoreConstant
 {
+	SCORE_KILLER = -1,
 	SCORE_DRAW = 0,
 	SCORE_MIN_MATE = 32667,
 	SCORE_MAX_MATE = 32767,

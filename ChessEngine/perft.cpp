@@ -4,6 +4,8 @@
 #include <stack>
 #include <vector>
 
+#include "config.h"
+
 Perft::PerftResult Perft::perft(Board board, int depth)
 {
 	std::cout << SlidingAttackTable[NORTH][A1] << std::endl;
@@ -16,18 +18,20 @@ Perft::PerftResult Perft::perft(Board board, int depth)
 std::vector<std::pair<Move, Perft::PerftResult> > Perft::perftPerMove(Board board, int depth)
 {
 	auto res = std::vector<std::pair<Move, Perft::PerftResult> >();
-	std::vector<Move> moves;
+
+	Move moves[MAX_MOVES];
+	int move_count;
 
 	if (board.toMove() == WHITE)
-		MoveGen::genMoves<WHITE, false>(board, moves);
+		MoveGen::genMoves<WHITE, false>(board, moves, move_count);
 	else
-		MoveGen::genMoves<BLACK, false>(board, moves);
+		MoveGen::genMoves<BLACK, false>(board, moves, move_count);
 
-	for (Move &move : moves)
+	for (int i = 0; i < move_count; ++i)
 	{
 		Board board_copy = board;
-		if (board_copy.makeMove(move))
-			res.push_back(std::make_pair(move, Perft::perft(board_copy, depth)));
+		if (board_copy.makeMove(moves[i]))
+			res.push_back(std::make_pair(moves[i], Perft::perft(board_copy, depth)));
 	}
 
 	return res;
@@ -40,25 +44,27 @@ int Perft::_perft(Board &board, int depth, int &captures, int &en_passants, int 
 		return 1;
 	}
 
-	std::vector<Move> moves;
+	Move moves[MAX_MOVES];
+	int move_count;
+
 	int score = 0;
 
 	if (board.toMove() == WHITE)
-		MoveGen::genMoves<WHITE, false>(board, moves);
+		MoveGen::genMoves<WHITE, false>(board, moves, move_count);
 	else
-		MoveGen::genMoves<BLACK, false>(board, moves);
+		MoveGen::genMoves<BLACK, false>(board, moves, move_count);
 
-	for (Move &move : moves)
+	for (int i = 0; i < move_count; ++i)
 	{
 		Board board_copy = board;
 
-		if (board_copy.makeMove(move))
+		if (board_copy.makeMove(moves[i]))
 		{
-			captures += move.isCapture() ? 1 : 0;
-			en_passants += move.isEnPassant() ? 1 : 0;
-			king_castles += move.isCastle(KINGSIDE) ? 1 : 0;
-			queen_castles += move.isCastle(QUEENSIDE)? 1 : 0;
-			promotions += move.isPromotion() ? 1 : 0;
+			captures += moves[i].isCapture() ? 1 : 0;
+			en_passants += moves[i].isEnPassant() ? 1 : 0;
+			king_castles += moves[i].isCastle(KINGSIDE) ? 1 : 0;
+			queen_castles += moves[i].isCastle(QUEENSIDE)? 1 : 0;
+			promotions += moves[i].isPromotion() ? 1 : 0;
 
 			score += _perft(board_copy, depth - 1, captures, en_passants, king_castles, queen_castles, promotions);
 		}

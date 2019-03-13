@@ -120,6 +120,7 @@ Board Board::fromFen(const std::string &fen)
 
 	board._initOccupied();
 	board._initPieceList();
+	board._initMaterial();
 	board._updateAttacked();
 
 	board._hash = Zobrist::getBoardHash(board);
@@ -217,6 +218,11 @@ Piece Board::pieceAt(Square square) const
 	return _piece_list[square];
 }
 
+int Board::material(Color color, PieceType piece_type) const 
+{
+	return _material[color][piece_type];
+}
+
 Bitboard Board::occupied(Color color) const
 {
 	return _occupied[color];
@@ -277,6 +283,23 @@ bool Board::makeMove(Move move)
 		return false;
 	else
 		return true;
+}
+
+int Board::phase() const
+{
+	const static int PHASE[] = { 0, 1, 1, 2, 4 };
+	const static int total = PHASE[PAWN] * 16 + PHASE[KNIGHT] * 4 + PHASE[BISHOP] * 4
+		+ PHASE[ROOK] * 4 + PHASE[QUEEN] * 2;
+
+	int ret = total;
+
+	for (PieceType piece_type = PAWN; piece_type < KING; ++piece_type)
+	{
+		ret -= _material[WHITE][piece_type] * PHASE[piece_type];
+		ret -= _material[BLACK][piece_type] * PHASE[piece_type];
+	}
+
+	return (ret * 256 + (total / 2)) / total;
 }
 
 bool Board::canCastle(Color color, Side side) const
@@ -351,6 +374,8 @@ void Board::_makeNormalMove(Move move)
 	if (move.isPromotion())
 	{
 		_pieces[toMove()][move.promotion()] |= b_to;
+		_material[toMove()][move.promotion()] += 1;
+		_material[toMove()][move.pieceType()] -= 1;
 		_hash ^= Zobrist::PiecePositionHash[toMove()][move.promotion()][move.to()];
 	}
 	else
@@ -362,6 +387,7 @@ void Board::_makeNormalMove(Move move)
 	if (piece != NO_PIECE)
 	{
 		_pieces[o][toPieceType(piece)] ^= b_to;
+		_material[o][toPieceType(piece)] -= 1;
 		_occupied[o] ^= b_to;
 		_hash ^= Zobrist::PiecePositionHash[o][toPieceType(piece)][move.to()];
 	}
@@ -372,9 +398,10 @@ void Board::_makeNormalMove(Move move)
 	{
 		assert(_en_passant_capture_target != NO_SQUARE);
 		Bitboard ep_ct_bb = Constants::SquareBB[_en_passant_capture_target];
-		_pieces[o][PAWN] ^= ep_ct_bb;
-		_piece_list[_en_passant_capture_target] = NO_PIECE;
 
+		_pieces[o][PAWN] ^= ep_ct_bb;
+		_material[o][PAWN] -= 1;
+		_piece_list[_en_passant_capture_target] = NO_PIECE;
 
 		assert(_occupied[o] & ep_ct_bb);
 		_occupied[o] ^= ep_ct_bb;
@@ -459,12 +486,19 @@ void Board::_initPieceList()
 	std::fill(_piece_list.begin(), _piece_list.end(), NO_PIECE);
 	for(Color color : Colors)
 	for (PieceType piece_type : PieceTypes)
-	{
 		for (Square square : BitboardIterator<Square>(_pieces[color][piece_type]))
 		{
 			_piece_list[square] = toPiece(piece_type, color);
 		}
-	}
+}
+
+void Board::_initMaterial()
+{
+	for (Color color : Colors)
+		for (PieceType piece_type : PieceTypes)
+		{
+			_material[color][piece_type] = Util::popCount(pieces(color, piece_type));
+		}
 }
 
 void Board::_updateAttacked()

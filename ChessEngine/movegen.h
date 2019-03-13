@@ -5,6 +5,7 @@
 #include "attacks.h"
 #include "bitboard_iterator.h"
 #include "board.h"
+#include "config.h"
 #include "evaluation.h"
 #include "move.h"
 #include "see.h"
@@ -15,24 +16,26 @@ using namespace Constants;
 namespace MoveGen
 {
 	template <Color toMove, bool quiescence>
-	void genMoves(const Board & board, std::vector<Move> & moves)
+	void genMoves(const Board & board, Move *moves, int &size)
 	{
-		genPawnMoves<toMove, quiescence>(board, moves);
-		genPieceMoves<KNIGHT, toMove, quiescence>(board, moves);
-		genPieceMoves<BISHOP, toMove, quiescence>(board, moves);
-		genPieceMoves<ROOK, toMove, quiescence>(board, moves);
-		genPieceMoves<QUEEN, toMove, quiescence>(board, moves);
-		genPieceMoves<KING, toMove, quiescence>(board, moves);
+		size = 0;
+
+		genPawnMoves<toMove, quiescence>(board, moves, size);
+		genPieceMoves<KNIGHT, toMove, quiescence>(board, moves, size);
+		genPieceMoves<BISHOP, toMove, quiescence>(board, moves, size);
+		genPieceMoves<ROOK, toMove, quiescence>(board, moves, size);
+		genPieceMoves<QUEEN, toMove, quiescence>(board, moves, size);
+		genPieceMoves<KING, toMove, quiescence>(board, moves, size);
 
 		if (!quiescence)
 		{
-			genCastle<toMove, KINGSIDE>(board, moves);
-			genCastle<toMove, QUEENSIDE>(board, moves);
+			genCastle<toMove, KINGSIDE>(board, moves, size);
+			genCastle<toMove, QUEENSIDE>(board, moves, size);
 		}
 	}
 
 	template <Color toMove, bool quiescence>
-	void genPawnMoves(const Board &board, std::vector<Move> &moves)
+	void genPawnMoves(const Board &board, Move *moves, int &size)
 	{
 		Bitboard pawns = board.pieces(toMove, PAWN);
 
@@ -43,13 +46,13 @@ namespace MoveGen
 			{
 				if (SquareBB[to] & Util::backRank<toMove>())
 				{
-					moves.push_back(Move(PAWN, from, to, QUEEN,  FLAG_CAPTURE));
-					moves.push_back(Move(PAWN, from, to, ROOK,   FLAG_CAPTURE));
-					moves.push_back(Move(PAWN, from, to, BISHOP, FLAG_CAPTURE));
-					moves.push_back(Move(PAWN, from, to, KNIGHT, FLAG_CAPTURE));
+					moves[size++] = Move(PAWN, from, to, QUEEN,  FLAG_CAPTURE);
+					moves[size++] = Move(PAWN, from, to, ROOK,   FLAG_CAPTURE);
+					moves[size++] = Move(PAWN, from, to, BISHOP, FLAG_CAPTURE);
+					moves[size++] = Move(PAWN, from, to, KNIGHT, FLAG_CAPTURE);
 				}
 				else
-					moves.push_back(Move(PAWN, from, to, FLAG_CAPTURE));
+					moves[size++] = Move(PAWN, from, to, FLAG_CAPTURE);
 			}
 
 			if (!quiescence)
@@ -62,20 +65,20 @@ namespace MoveGen
 
 					if (SquareBB[to] & Util::backRank<toMove>())
 					{
-						moves.push_back(Move(PAWN, from, to, QUEEN));
-						moves.push_back(Move(PAWN, from, to, ROOK));
-						moves.push_back(Move(PAWN, from, to, BISHOP));
-						moves.push_back(Move(PAWN, from, to, KNIGHT));
+						moves[size++] = Move(PAWN, from, to, QUEEN);
+						moves[size++] = Move(PAWN, from, to, ROOK);
+						moves[size++] = Move(PAWN, from, to, BISHOP);
+						moves[size++] = Move(PAWN, from, to, KNIGHT);
 					}
 					else
-						moves.push_back(Move(PAWN, from, to));
+						moves[size++] = Move(PAWN, from, to);
 				}
 
 				targets = pawnDoublePushTargets<toMove>(SquareBB[from], ~board.occupied());
 				if (targets)
 				{
 					Square to = Util::bitScanForward(targets);
-					moves.push_back(Move(PAWN, from, to, FLAG_DOUBLE_PUSH));
+					moves[size++] = Move(PAWN, from, to, FLAG_DOUBLE_PUSH);
 				}
 			}
 		}
@@ -87,13 +90,13 @@ namespace MoveGen
 
 			for (Square from : BitboardIterator<Square>(ep_pawns))
 			{
-				moves.push_back(Move(PAWN, from, to, FLAG_CAPTURE | FLAG_EN_PASSANT));
+				moves[size++] = Move(PAWN, from, to, FLAG_CAPTURE | FLAG_EN_PASSANT);
 			}
 		}
 	}
 
 	template <PieceType pieceType, Color toMove, bool quiescence>
-	void genPieceMoves(const Board &board, std::vector<Move> &moves)
+	void genPieceMoves(const Board &board, Move *moves, int &size)
 	{
 		for (Square from : BitboardIterator<Square>(board.pieces(toMove, pieceType)))
 		{
@@ -101,7 +104,7 @@ namespace MoveGen
 
 			for (Square to : BitboardIterator<Square>(targets))
 			{
-				moves.push_back(Move(pieceType, from, to, FLAG_CAPTURE));
+				moves[size++] = Move(pieceType, from, to, FLAG_CAPTURE);
 			}
 
 			if (!quiescence)
@@ -110,14 +113,14 @@ namespace MoveGen
 
 				for (Square to : BitboardIterator<Square>(targets))
 				{
-					moves.push_back(Move(pieceType, from, to));
+					moves[size++] = Move(pieceType, from, to);
 				}
 			}
 		};
 	}
 
 	template <Color toMove, Side side>
-	void genCastle(const Board &board, std::vector<Move> &moves)
+	void genCastle(const Board &board, Move *moves, int &size)
 	{
 		const static Bitboard CantBeAttacked =
 			(toMove == WHITE
@@ -134,7 +137,7 @@ namespace MoveGen
 			&& !(board.attacked(~toMove) & CantBeAttacked)
 			&& !(board.occupied() & CantBeOccupied))
 		{
-			moves.push_back(Move::castle(toMove, side));
+			moves[size++] = Move::castle(toMove, side);
 		}
 	}
 
@@ -151,20 +154,21 @@ namespace MoveGen
 	class MoveGenerator
 	{
 	public:
-		MoveGenerator(const Board & board, const Move hash_move) : _board(board), _hash_move(hash_move), _pos(0)
+		MoveGenerator(const Board & board, Move hash_move = Move(), const std::pair<Move, Move> &killer_moves = std::make_pair(Move(), Move()))
+			: _board(board), _hash_move(hash_move), _killer_moves(killer_moves), _pos(0), _curr_hash_move(true)
 		{
-			_moves.reserve(50);
 			if (!_hash_move.isValid())
 			{
-				genMoves<toMove, quiescence>(_board, _moves);
+				genMoves<toMove, quiescence>(_board, _moves, _move_count);
 				_getScores();
 				_selectNext();
+				_curr_hash_move = false;
 			}
 		}
 
 		Move curr() const
 		{
-			if (_hash_move.isValid())
+			if (_curr_hash_move)
 				return _hash_move;
 			else
 				return _moves[_pos];
@@ -172,31 +176,33 @@ namespace MoveGen
 
 		void next()
 		{
-			if (_hash_move.isValid())
+			if (_curr_hash_move)
 			{
-				genMoves<toMove, quiescence>(_board, _moves);
-				_moves.erase(std::find(_moves.begin(), _moves.end(), _hash_move));
-				_hash_move = Move();
+				genMoves<toMove, quiescence>(_board, _moves, _move_count);
+				_curr_hash_move = false;
 				_getScores();
 			}
 			else
 				++_pos;
 
-			if(_pos < _moves.size())
+			if(_pos < _move_count)
 				_selectNext();
+
+			if (_moves[_pos] == _hash_move)
+				next();
 		}
 
 		bool end()
 		{
-			return !_hash_move.isValid() && _pos >= _moves.size()/*
+			return !_curr_hash_move && _pos >= _move_count/*
 				|| quiescence && _scores[_pos] < 0)*/;
 		}
 
 	private:
 		void _getScores()
 		{
-			_scores.resize(_moves.size());
-			for (int i = 0; i < _moves.size(); ++i)
+			_scores.resize(_move_count);
+			for (int i = 0; i < _move_count; ++i)
 			{
 				if (_moves[i].isPromotion())
 					_scores[i] = Evaluation::PieceValue[_moves[i].promotion()].mg;
@@ -207,9 +213,13 @@ namespace MoveGen
 					else
 						_scores[i] = see<toMove>(_board, _moves[i]);
 				}
+				else if (!quiescence && (_moves[i] == _killer_moves.first || _moves[i] == _killer_moves.second))
+				{
+					_scores[i] = SCORE_KILLER;
+				}
 				else
 				{
-					_scores[i] = pieceSquareEval<toMove>(_board, _moves[i]);
+					_scores[i] = -10;
 				}
 			}
 		}
@@ -217,7 +227,7 @@ namespace MoveGen
 		void _selectNext()
 		{
 			int max = _pos;
-			for (int i = _pos; i < _moves.size(); ++i)
+			for (int i = _pos; i < _move_count; ++i)
 			{
 				if (_scores[i] > _scores[max])
 					max = i;
@@ -232,8 +242,11 @@ namespace MoveGen
 
 		const Board & _board;
 		Move _hash_move;
-		std::vector<Move> _moves;
+		const std::pair<Move, Move> &_killer_moves;
+		Move _moves[MAX_MOVES];
+		int _move_count;
 		std::vector<int> _scores;
 		int _pos;
+		bool _curr_hash_move;
 	};
 }

@@ -22,6 +22,8 @@ namespace Search
 	static TranspositionTable ab_tr_table(128);
 	static TranspositionTable qs_tr_table(128);
 
+	static std::pair<Move, Move> killer_moves[MAX_DEPTH];
+
 	static struct {
 		unsigned long long alpha_beta_nodes;
 		unsigned long long quiescence_nodes;
@@ -29,6 +31,7 @@ namespace Search
 		unsigned long long quiescence_cutoffs;
 		unsigned long long _move_gen_count;
 		unsigned long long hash_move_cutoffs;
+		unsigned long long killer_move_cutoffs;
 		unsigned long long hash_score_returned;
 		unsigned long long pv_search_research_count;
 		float avg_searched_moves;
@@ -51,10 +54,11 @@ namespace Search
 	void startSearch(const Board & board, int maxdepth);
 	void search(const Board & board, int maxdepth);
 
-	template <Color toMove, bool root, bool pvNode, bool nullMoveAllowed>
+	template <Color toMove, bool pvNode, bool nullMoveAllowed>
 	int alphaBeta(const Board & board, int alpha, int beta, int depthleft, int maxdepth, std::vector<Move> & pv)
 	{
 		++Stats.alpha_beta_nodes;
+		int ply = maxdepth - depthleft;
 
 		if (Search::stop && maxdepth >= 5)
 			return SCORE_INVALID;
@@ -65,7 +69,7 @@ namespace Search
 		auto hash = ab_tr_table.probe(board.hash(), depthleft, alpha, beta);
 		if (hash.first == alpha || hash.first == beta)
 		{
-			assert(!root);
+			assert(ply);
 			++Stats.hash_score_returned;
 			return hash.first;
 		}
@@ -86,7 +90,7 @@ namespace Search
 			Board board_copy = board;
 			board_copy.makeMove(Move::nullMove());
 
-			int score = -alphaBeta<~toMove, false, false, false>(board_copy, -beta, -beta + 1, depthleft - 2, maxdepth, new_pv);
+			int score = -alphaBeta<~toMove, false, false>(board_copy, -beta, -beta + 1, depthleft - 2, maxdepth, new_pv);
 			if (score >= beta)
 				return beta;
 		}
@@ -98,7 +102,7 @@ namespace Search
 		int alpha_orig = alpha;
 		int searched_moves = 0;
 
-		MoveGen::MoveGenerator<toMove, false> mg(board, hash_move);
+		MoveGen::MoveGenerator<toMove, false> mg(board, hash_move, killer_moves[ply]);
 		for(int i = 1; !mg.end(); ++i, mg.next())
 		{
 			Board board_copy = board;
@@ -106,7 +110,7 @@ namespace Search
 			if (!board_copy.makeMove(mg.curr()))
 				continue;
 
-			if (root)
+			if (ply == 0)
 				sendCurrentMove(mg.curr(), i);
 
 			std::vector<Move> new_pv(depthleft - 1);
@@ -114,22 +118,22 @@ namespace Search
 			int score;
 
 #ifdef PV_SEARCH
-			if (searched_moves < 10)
-				score = -alphaBeta<~toMove, false, true, false>(board_copy, -beta, -alpha, depthleft - 1, maxdepth, new_pv);
+			if (searched_moves < 7)
+				score = -alphaBeta<~toMove, true, false>(board_copy, -beta, -alpha, depthleft - 1, maxdepth, new_pv);
 			else
 			{
-				score = -alphaBeta<~toMove, false, false, true>(board_copy, -(alpha + 1), -alpha, depthleft - 1, maxdepth, new_pv);
+				score = -alphaBeta<~toMove, false, true>(board_copy, -(alpha + 1), -alpha, depthleft - 1, maxdepth, new_pv);
 				if (score > alpha)
 				{
 					++Stats.pv_search_research_count;
-					score = -alphaBeta<~toMove, false, true, false>(board_copy, -beta, -alpha, depthleft - 1, maxdepth, new_pv);
+					score = -alphaBeta<~toMove, true, false>(board_copy, -beta, -alpha, depthleft - 1, maxdepth, new_pv);
 				}
 			}
 #else
 			Square from = mg.curr().from();
 			Square to = mg.curr().to();
 
-			score = -alphaBeta<~toMove, false, true, false>(board_copy, -beta, -alpha, depthleft - 1, maxdepth, new_pv);
+			score = -alphaBeta<~toMove, true, false>(board_copy, -beta, -alpha, depthleft - 1, maxdepth, new_pv);
 #endif
 
 			++searched_moves;
@@ -140,8 +144,19 @@ namespace Search
 			if (score >= beta)
 			{
 				++Stats.alpha_beta_cutoffs;
+
 				if (mg.curr() == hash_move)
 					++Stats.hash_move_cutoffs;
+
+				if (!mg.curr().isCapture())
+				{
+					if (mg.curr() == killer_moves[ply].first || mg.curr() == killer_moves[ply].second)
+						++Stats.killer_move_cutoffs;
+
+					killer_moves[ply].second = killer_moves[ply].first;
+					killer_moves[ply].first = mg.curr();
+				}
+
 
 				assert(mg.curr() != Move());
 				ab_tr_table.insertEntry(board.hash(), depthleft, beta, mg.curr(), CUT_NODE);
@@ -199,7 +214,7 @@ namespace Search
 		if (hash.first != SCORE_INVALID)
 			return hash.first;
 #endif
-		int score = Evaluation::evaluate<toMove>(board).mg;
+		int score = Evaluation::evaluate<toMove>(board);
 
 		if (score >= beta)
 			return beta;

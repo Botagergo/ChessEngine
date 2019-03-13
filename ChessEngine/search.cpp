@@ -56,6 +56,8 @@ namespace Search
 		ab_tr_table.clear();
 		qs_tr_table.clear();
 
+		std::fill(killer_moves, killer_moves + MAX_DEPTH, std::make_pair(Move(), Move()));
+
 		stop = false;
 		std::thread info(infoThread);
 		info.detach();
@@ -69,9 +71,9 @@ namespace Search
 		for (depth = 1; depth <= maxdepth; ++depth)
 		{
 			if (board.toMove() == WHITE)
-				score = alphaBeta<WHITE, true, true, false>(board, -SCORE_INFINITY, SCORE_INFINITY, depth, depth, pv[depth]);
+				score = alphaBeta<WHITE, true, false>(board, -SCORE_INFINITY, SCORE_INFINITY, depth, depth, pv[depth]);
 			else
-				score = alphaBeta<BLACK, true, true, false>(board, -SCORE_INFINITY, SCORE_INFINITY, depth, depth, pv[depth]);
+				score = alphaBeta<BLACK, true, false>(board, -SCORE_INFINITY, SCORE_INFINITY, depth, depth, pv[depth]);
 
 			updateNodesPerSec();
 
@@ -130,6 +132,7 @@ namespace Search
 	{
 		std::cout << std::endl
 			<< "info string " << "\tpv_search_researches:\t" << Search::Stats.pv_search_research_count << std::endl
+			<< "info string " << "\tkiller move cutoffs:\t" << Search::Stats.killer_move_cutoffs << std::endl
 			<< "info string " << "\thash move cutoffs:\t" << Search::Stats.hash_move_cutoffs << std::endl
 			<< "info string " << "\thash score returned:\t" << Search::Stats.hash_score_returned << std::endl
 			<< "info string " << "\tavg searched moves:\t" << Search::Stats.avg_searched_moves << std::endl

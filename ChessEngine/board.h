@@ -33,11 +33,15 @@ public:
 	Bitboard pieces(Color color, PieceType piece) const;
 	Piece pieceAt(Square square) const;
 
+	int material(Color color, PieceType piece_type) const;
+
 	Bitboard occupied(Color color) const;
 	Bitboard occupied() const;
 
 	Bitboard attacked(Color color) const;
 	Bitboard attacked(Square square) const;
+
+	int phase() const;
 
 	bool canCastle(Color color, Side side) const;
 
@@ -69,6 +73,8 @@ private:
 	std::array<Bitboard, SQUARE_NB> _attackedByPiece;
 	std::array<Bitboard, COLOR_NB> _attackedByColor;
 	std::array<Bitboard, COLOR_NB> _pinnedPieces;
+	int _material[COLOR_NB][PIECE_TYPE_NB];
+	
 
 	Square _en_passant_target;
 	Square _en_passant_capture_target;
@@ -80,6 +86,7 @@ private:
 
 	void _initOccupied();
 	void _initPieceList();
+	void _initMaterial();
 	void _updateAttacked();
 };
 

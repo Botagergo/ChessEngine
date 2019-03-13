@@ -141,6 +141,4 @@ void initAttackTables() {
 			SlidingAttackTable[NORTHEAST][rank + file] = n;
 		}
 	}
-
-	std::cout << SlidingAttackTable[NORTH][A1] << std::endl;
 }

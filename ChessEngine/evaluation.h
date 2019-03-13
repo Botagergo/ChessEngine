@@ -88,7 +88,7 @@ namespace Evaluation
 	}
 
 	template <Color color>
-	Score evaluate(const Board & board)
+	int evaluate(const Board & board)
 	{
 		Score score;
 
@@ -124,6 +124,6 @@ namespace Evaluation
 		else
 			score -= TempoBonus;
 
-		return score;
+		return (score.mg * (256 - board.phase()) + score.eg * board.phase()) / 256;
 	}
 }

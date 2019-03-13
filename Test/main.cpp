@@ -18,7 +18,7 @@ void perft_received(Board board, int depth, std::vector<Move> moves, bool per_mo
 void printPerftRes(Perft::PerftResult res);
 
 Board board;
-int maxdepth = 6;
+int maxdepth = 7;
 
 enum class command
 {
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
 		}
 		else if (token == "eval")
 		{
-			std::cout << Evaluation::evaluate<WHITE>(board).mg << std::endl;
+			std::cout << Evaluation::evaluate<WHITE>(board) << std::endl;
 		}
 		else if (token == "perft")
 		{
