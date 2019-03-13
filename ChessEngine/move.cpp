@@ -22,7 +22,7 @@ Move::Move(PieceType piece_type, Square from, Square to, PieceType promotion, un
 Move Move::parse(const Board & board, std::string algebraic)
 {
 	const static std::string square_regex = "([a-h][1-8])";
-	const static std::string promotion_regex = "(nbrq)?";
+	const static std::string promotion_regex = "(n|b|r|q)?";
 	const static std::string whitespace_regex = "\\s*";
 
 	const static std::string move_regex = std::string("^") +
@@ -92,7 +92,6 @@ bool Move::isDoublePush() const
 {
 	return _move & FLAG_DOUBLE_PUSH;
 }
-
 
 bool Move::isCapture() const
 {
