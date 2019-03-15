@@ -24,6 +24,10 @@ Bitboard slidingAttacks(Square square, Bitboard occupied)
 	return attacks;
 }
 
+Bitboard pseudoRookAttacks(Square square);
+Bitboard pseudoQueenAttacks(Square square);
+Bitboard pseudoBishopAttacks(Square square);
+
 template <Color color>
 Bitboard pawnSinglePushTargets(Bitboard pawns, Bitboard empty) {
 	if (color == WHITE)

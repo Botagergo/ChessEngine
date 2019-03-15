@@ -41,6 +41,9 @@ public:
 	Bitboard attacked(Color color) const;
 	Bitboard attacked(Square square) const;
 
+	template <Color color>
+	Bitboard pinnedPieces() const;
+
 	int phase() const;
 
 	bool canCastle(Color color, Side side) const;
@@ -75,7 +78,6 @@ private:
 	std::array<Bitboard, COLOR_NB> _pinnedPieces;
 	int _material[COLOR_NB][PIECE_TYPE_NB];
 	
-
 	Square _en_passant_target;
 	Square _en_passant_capture_target;
 
@@ -90,3 +92,22 @@ private:
 	void _updateAttacked();
 };
 
+template <Color color>
+Bitboard Board::pinnedPieces() const
+{
+	assert(pieces(color, KING) != C64(0));
+
+	Square king = Util::bitScanForward(pieces(color, KING));
+	Bitboard pinners = ((pieces(~color, ROOK) | pieces(~color, QUEEN)) & pseudoRookAttacks(king))
+		| ((pieces(~color, BISHOP) | pieces(~color, QUEEN)) & pseudoBishopAttacks(king));
+	Bitboard pinned = 0;
+
+	for (Square pinner : BitboardIterator<Square>(pinners))
+	{
+		Bitboard b = ObstructedTable[pinner][king] & occupied();
+		if ((b != 0) && (b & (b - 1)) == 0 && ((b & occupied(color)) != 0))
+			pinned |= b;
+	}
+
+	return pinned;
+}

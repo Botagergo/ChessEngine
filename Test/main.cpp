@@ -47,6 +47,7 @@ int main(int argc, char *argv[])
 {
 	initSquareBB();
 	initAttackTables();
+	initObstructedTable();
 	Zobrist::initZobristHashing();
 
 	std::string line;

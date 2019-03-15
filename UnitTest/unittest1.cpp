@@ -339,6 +339,26 @@ namespace UnitTests
 			Assert::IsFalse(isPassedPawn<BLACK>(D4, 0x40000));
 			Assert::IsTrue(isPassedPawn<BLACK>(D4, 0x4000000));
 		}
+
+		TEST_METHOD(pinnedPieces_Test)
+		{
+			initSquareBB();
+			initAttackTables();
+			initObstructedTable();
+			Zobrist::initZobristHashing();
+
+			Board board = Board::fromFen("8/4K3/6B1/8/8/3n4/2k5/8 b - - 0 1 ");
+			Assert::IsTrue(board.pinnedPieces<BLACK>() & board.pieces(BLACK, KNIGHT));
+
+			board = Board::fromFen("4k3/8/2r3q1/8/8/2PN4/2K5/8 b - - 0 1 ");
+			Assert::IsTrue(board.pinnedPieces<WHITE>() & (board.pieces(WHITE, KNIGHT) | board.pieces(WHITE, PAWN)));
+
+			board = Board::fromFen("8/3k4/3q4/3p2b1/5N2/3PP3/3K4/8 b - - 0 1 ");
+			Assert::IsFalse(board.pinnedPieces<WHITE>());
+
+			board = Board::fromFen("8/3k4/3q4/8/8/3Q4/3R4/4K3 b - - 0 1 ");
+			Assert::IsTrue(board.pinnedPieces<BLACK>() & board.pieces(BLACK, QUEEN));
+		}
 	};
 }
 

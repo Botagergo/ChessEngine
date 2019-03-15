@@ -25,7 +25,7 @@ public:
 
 		value_type operator*() const
 		{
-			return bitScanForward(_bb);
+			assert(false);
 		}
 
 		self_type& operator++()

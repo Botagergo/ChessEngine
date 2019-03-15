@@ -2,6 +2,29 @@
 
 #include <iostream>
 
+Bitboard pseudoBishopAttacks(Square square)
+{
+	return SlidingAttackTable[NORTHEAST][square]
+		| SlidingAttackTable[SOUTHEAST][square]
+		| SlidingAttackTable[SOUTHWEST][square]
+		| SlidingAttackTable[NORTHWEST][square];
+}
+Bitboard pseudoRookAttacks(Square square)
+{
+	return SlidingAttackTable[NORTH][square]
+		| SlidingAttackTable[EAST][square]
+		| SlidingAttackTable[SOUTH][square]
+		| SlidingAttackTable[WEST][square];
+}
+
+Bitboard pseudoQueenAttacks(Square square)
+{
+	return pseudoBishopAttacks(square) | pseudoRookAttacks(square);
+}
+
+Bitboard pseudoQueenAttacks(Square square);
+Bitboard pseudoBishopAttacks(Square square);
+
 Bitboard knightAttacks(Square knight)
 {
 	return KnightAttackTable[knight];

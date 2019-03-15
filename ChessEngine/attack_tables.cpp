@@ -1,7 +1,9 @@
+#include "attacks.h"
 #include "attack_tables.h"
 #include "constants.h"
 #include "util.h"
 
+#include <algorithm>
 #include <iostream>
 
 using namespace Constants;
@@ -9,6 +11,7 @@ using namespace Constants;
 Bitboard KnightAttackTable[SQUARE_NB] = {};
 Bitboard KingAttackTable[SQUARE_NB] = {};
 Bitboard SlidingAttackTable[DIRECTION_NB][SQUARE_NB] = {};
+Bitboard ObstructedTable[SQUARE_NB][SQUARE_NB] = {};
 
 void initAttackTables() {
 	for (int i = 0; i < SQUARE_NB; ++i)
@@ -139,6 +142,26 @@ void initAttackTables() {
 		for (int rank = 0; rank < 8 * 8; rank += 8, n <<= 8)
 		{
 			SlidingAttackTable[NORTHEAST][rank + file] = n;
+		}
+	}
+}
+
+void initObstructedTable()
+{
+	for (int from = 0; from < 64; from++)
+	{
+		for (int to = 0; to < 64; to++)
+		{
+			ObstructedTable[from][to] = 0;
+
+			if ((pseudoRookAttacks((Square)from) | pseudoBishopAttacks((Square)from)) & SquareBB[to])
+			{
+				int delta = (to - from) / std::max(abs(Util::getFile((Square)from) - Util::getFile((Square)to)), 
+					abs(Util::getRank((Square)from) - Util::getRank((Square)to)));
+
+				for (int s = from + delta; s != to; s += delta)
+					ObstructedTable[from][to] |= SquareBB[s];
+			}
 		}
 	}
 }
