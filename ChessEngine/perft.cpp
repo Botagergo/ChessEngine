@@ -8,7 +8,6 @@
 
 Perft::PerftResult Perft::perft(Board board, int depth)
 {
-	std::cout << SlidingAttackTable[NORTH][A1] << std::endl;
 	Perft::PerftResult res = { 0 };
 	res.nodes = Perft::_perft(board, depth, res.captures, res.en_passants, res.king_castles, res.queen_castles, res.promotions);
 

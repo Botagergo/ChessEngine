@@ -24,6 +24,8 @@ namespace Search
 
 	static std::pair<Move, Move> killer_moves[MAX_DEPTH];
 
+	static std::array<unsigned long long, MAX_DEPTH> history;
+
 	static struct {
 		unsigned long long alpha_beta_nodes;
 		unsigned long long quiescence_nodes;
@@ -54,11 +56,15 @@ namespace Search
 	void startSearch(const Board & board, int maxdepth);
 	void search(const Board & board, int maxdepth);
 
+	bool isRepetition(unsigned long long hash, int ply);
+
 	template <Color toMove, bool pvNode, bool nullMoveAllowed>
 	int alphaBeta(const Board & board, int alpha, int beta, int depthleft, int maxdepth, std::vector<Move> & pv)
 	{
 		++Stats.alpha_beta_nodes;
 		int ply = maxdepth - depthleft;
+
+		history[ply] = board.hash();
 
 		if (Search::stop && maxdepth >= 5)
 			return SCORE_INVALID;
@@ -101,6 +107,8 @@ namespace Search
 		int curr_pos = 0;
 		int alpha_orig = alpha;
 		int searched_moves = 0;
+		int score;
+		std::vector<Move> new_pv(depthleft - 1);
 
 		MoveGen::MoveGenerator<toMove, false> mg(board, hash_move, killer_moves[ply]);
 		for(int i = 1; !mg.end(); ++i, mg.next())
@@ -110,12 +118,16 @@ namespace Search
 			if (!board_copy.makeMove(mg.curr()))
 				continue;
 
+			if (isRepetition(board_copy.hash(), ply))
+			{
+				score = 0;
+				goto SearchEnd;
+			}
+
 			if (ply == 0)
 				sendCurrentMove(mg.curr(), i);
 
-			std::vector<Move> new_pv(depthleft - 1);
 
-			int score;
 
 #ifdef PV_SEARCH
 			if (searched_moves < 7)
@@ -136,10 +148,12 @@ namespace Search
 			score = -alphaBeta<~toMove, true, false>(board_copy, -beta, -alpha, depthleft - 1, maxdepth, new_pv);
 #endif
 
-			++searched_moves;
-
 			if (score == -SCORE_INVALID)
 				return SCORE_INVALID;
+
+SearchEnd:
+
+			++searched_moves;
 
 			if (score >= beta)
 			{
@@ -179,10 +193,6 @@ namespace Search
 				if (alpha == SCORE_MAX_MATE - 1)
 					break;
 			}
-			//if (debug && root)
-			//{
-			//	std::cout << "info string  move " << searched_moves << ":\t" << mg.curr().toAlgebraic() << "\t" << score / 100.0 << std::endl;
-			//}
 		}
 
 		if (searched_moves == 0)

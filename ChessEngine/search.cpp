@@ -99,6 +99,16 @@ namespace Search
 			sendStats();
 	}
 
+	bool isRepetition(unsigned long long hash, int ply)
+	{
+		for (int i = 0; i < ply; i += 2)
+		{
+			if (history[i] == hash)
+				return true;
+		}
+		return false;
+	}
+
 	void sendBestMove(Move move)
 	{
 		std::cout << "bestmove " << move.toAlgebraic() << std::endl;
