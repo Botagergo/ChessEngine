@@ -71,9 +71,9 @@ namespace Search
 		for (depth = 1; depth <= maxdepth; ++depth)
 		{
 			if (board.toMove() == WHITE)
-				score = alphaBeta<WHITE, true, false>(board, -SCORE_INFINITY, SCORE_INFINITY, depth, depth, pv[depth]);
+				score = alphaBeta<WHITE, true, false>(board, -SCORE_INFINITY, SCORE_INFINITY, depth, 0, &pv[depth]);
 			else
-				score = alphaBeta<BLACK, true, false>(board, -SCORE_INFINITY, SCORE_INFINITY, depth, depth, pv[depth]);
+				score = alphaBeta<BLACK, true, false>(board, -SCORE_INFINITY, SCORE_INFINITY, depth, 0, &pv[depth]);
 
 			updateNodesPerSec();
 

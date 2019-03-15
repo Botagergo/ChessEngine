@@ -59,14 +59,13 @@ namespace Search
 	bool isRepetition(unsigned long long hash, int ply);
 
 	template <Color toMove, bool pvNode, bool nullMoveAllowed>
-	int alphaBeta(const Board & board, int alpha, int beta, int depthleft, int maxdepth, std::vector<Move> & pv)
+	int alphaBeta(const Board & board, int alpha, int beta, int depthleft, int ply, std::vector<Move> * pv)
 	{
 		++Stats.alpha_beta_nodes;
-		int ply = maxdepth - depthleft;
 
 		history[ply] = board.hash();
 
-		if (Search::stop && maxdepth >= 5)
+		if (Search::stop)
 			return SCORE_INVALID;
 
 		Move hash_move = Move();
@@ -92,11 +91,10 @@ namespace Search
 #ifdef NULL_MOVE_PRUNING
 		if (nullMoveAllowed && depthleft >= 4 && !board.isInCheck(toMove))
 		{
-			std::vector<Move> new_pv(depthleft - 1);
 			Board board_copy = board;
 			board_copy.makeMove(Move::nullMove());
 
-			int score = -alphaBeta<~toMove, false, false>(board_copy, -beta, -beta + 1, depthleft - 2, maxdepth, new_pv);
+			int score = -alphaBeta<~toMove, false, false>(board_copy, -beta, -beta + 1, depthleft - 2, ply + 1, nullptr);
 			if (score >= beta)
 				return beta;
 		}
@@ -108,7 +106,14 @@ namespace Search
 		int alpha_orig = alpha;
 		int searched_moves = 0;
 		int score;
-		std::vector<Move> new_pv(depthleft - 1);
+		std::vector<Move> new_pv;
+		std::vector<Move> * new_pv_ptr = 0;
+
+		if (pvNode)
+		{
+			new_pv.resize(depthleft - 1);
+			new_pv_ptr = &new_pv;
+		}
 
 		MoveGen::MoveGenerator<toMove, false> mg(board, hash_move, killer_moves[ply]);
 		for(int i = 1; !mg.end(); ++i, mg.next())
@@ -127,18 +132,16 @@ namespace Search
 			if (ply == 0)
 				sendCurrentMove(mg.curr(), i);
 
-
-
 #ifdef PV_SEARCH
 			if (searched_moves < 7)
-				score = -alphaBeta<~toMove, true, false>(board_copy, -beta, -alpha, depthleft - 1, maxdepth, new_pv);
+				score = -alphaBeta<~toMove, true, false>(board_copy, -beta, -alpha, depthleft - 1, ply + 1, new_pv_ptr);
 			else
 			{
-				score = -alphaBeta<~toMove, false, true>(board_copy, -(alpha + 1), -alpha, depthleft - 1, maxdepth, new_pv);
+				score = -alphaBeta<~toMove, false, true>(board_copy, -(alpha + 1), -alpha, depthleft - 1, ply + 1, nullptr);
 				if (score > alpha)
 				{
 					++Stats.pv_search_research_count;
-					score = -alphaBeta<~toMove, true, false>(board_copy, -beta, -alpha, depthleft - 1, maxdepth, new_pv);
+					score = -alphaBeta<~toMove, true, false>(board_copy, -beta, -alpha, depthleft - 1, ply + 1, new_pv_ptr);
 				}
 			}
 #else
@@ -185,10 +188,14 @@ SearchEnd:
 
 				alpha = score;
 
-				pv.resize(depthleft);
-				pv[0] = mg.curr();
-				assert(pv[0].from() != 0 || pv[0].to() != 0);
-				std::copy(new_pv.begin(), new_pv.end(), pv.begin() + 1);
+				if (pvNode)
+				{
+					assert(new_pv_ptr != nullptr && pv != nullptr);
+
+					pv->resize(depthleft);
+					(*pv)[0] = mg.curr();
+					std::copy(new_pv.begin(), new_pv.end(), pv->begin() + 1);
+				}
 
 				if (alpha == SCORE_MAX_MATE - 1)
 					break;
@@ -205,8 +212,8 @@ SearchEnd:
 
 		if (alpha != alpha_orig)
 		{
-			assert(pv[0] != Move());
-			ab_tr_table.insertEntry(board.hash(), depthleft, alpha, pv[0], PV_NODE);
+			assert((*pv)[0] != Move());
+			ab_tr_table.insertEntry(board.hash(), depthleft, alpha, (*pv)[0], PV_NODE);
 		}
 		else
 			ab_tr_table.insertEntry(board.hash(), depthleft, alpha, Move(), ALL_NODE);
