@@ -59,6 +59,7 @@ int main(int argc, char *argv[])
 		iss >> std::skipws >> token;
 		if (token == "uci")
 		{
+			std::cout << "option name Hash min 32 max 2048" << std::endl;
 			std::cout << "option name maxdepth type string" << std::endl;
 			std::cout << "uciok" << std::endl;
 		}
@@ -244,6 +245,14 @@ void setoptionReceived(std::string name, std::string value)
 	{
 		std::stringstream ss(value);
 		ss >> maxdepth;
+	}
+	else if (name == "Hash")
+	{
+		std::stringstream ss(value);
+		int size_mb;
+		ss >> size_mb;
+		Search::ab_tr_table = TranspositionTable(size_mb);
+		Search::qs_tr_table = TranspositionTable(size_mb);
 	}
 }
 

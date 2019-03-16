@@ -141,6 +141,7 @@ namespace Search
 	void sendStats()
 	{
 		std::cout << std::endl
+			<< "info string " << "\thash table - failed inserts:\t" << ab_tr_table.getStats()->failed_inserts << std::endl
 			<< "info string " << "\tpv_search_researches:\t" << Search::Stats.pv_search_research_count << std::endl
 			<< "info string " << "\tkiller move cutoffs:\t" << Search::Stats.killer_move_cutoffs << std::endl
 			<< "info string " << "\thash move cutoffs:\t" << Search::Stats.hash_move_cutoffs << std::endl

@@ -19,8 +19,8 @@ namespace Search
 	extern bool debug;
 	extern bool stop;
 
-	static TranspositionTable ab_tr_table(128);
-	static TranspositionTable qs_tr_table(128);
+	static TranspositionTable ab_tr_table(DEFAULT_HASH_TABLE_SIZE);
+	static TranspositionTable qs_tr_table(DEFAULT_HASH_TABLE_SIZE);
 
 	static std::pair<Move, Move> killer_moves[MAX_DEPTH];
 
@@ -100,8 +100,8 @@ namespace Search
 		}
 #endif
 
-		++Stats._move_gen_count;
 
+		++Stats._move_gen_count;
 		int curr_pos = 0;
 		int alpha_orig = alpha;
 		int searched_moves = 0;
@@ -133,22 +133,21 @@ namespace Search
 				sendCurrentMove(mg.curr(), i);
 
 #ifdef PV_SEARCH
-			if (searched_moves < 7)
-				score = -alphaBeta<~toMove, true, false>(board_copy, -beta, -alpha, depthleft - 1, ply + 1, new_pv_ptr);
+			if (searched_moves < 1)
+				score = -alphaBeta<~toMove, pvNode, false>(board_copy, -beta, -alpha, depthleft - 1, ply + 1, new_pv_ptr);
 			else
 			{
 				score = -alphaBeta<~toMove, false, true>(board_copy, -(alpha + 1), -alpha, depthleft - 1, ply + 1, nullptr);
 				if (score > alpha)
 				{
 					++Stats.pv_search_research_count;
-					score = -alphaBeta<~toMove, true, false>(board_copy, -beta, -alpha, depthleft - 1, ply + 1, new_pv_ptr);
+					score = -alphaBeta<~toMove, pvNode, false>(board_copy, -beta, -alpha, depthleft - 1, ply + 1, new_pv_ptr);
 				}
 			}
 #else
 			Square from = mg.curr().from();
 			Square to = mg.curr().to();
-
-			score = -alphaBeta<~toMove, true, false>(board_copy, -beta, -alpha, depthleft - 1, maxdepth, new_pv);
+			score = -alphaBeta<~toMove, true, false>(board_copy, -beta, -alpha, depthleft - 1, ply + 1, new_pv_ptr);
 #endif
 
 			if (score == -SCORE_INVALID)
@@ -210,13 +209,15 @@ SearchEnd:
 				return SCORE_DRAW;
 		}
 
-		if (alpha != alpha_orig)
+		if (alpha == alpha_orig)
+		{
+			ab_tr_table.insertEntry(board.hash(), depthleft, alpha, Move(), ALL_NODE);
+		}
+		else if (pv)
 		{
 			assert((*pv)[0] != Move());
 			ab_tr_table.insertEntry(board.hash(), depthleft, alpha, (*pv)[0], PV_NODE);
 		}
-		else
-			ab_tr_table.insertEntry(board.hash(), depthleft, alpha, Move(), ALL_NODE);
 
 		return alpha;
 	}

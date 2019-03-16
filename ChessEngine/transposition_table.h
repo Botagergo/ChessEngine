@@ -38,6 +38,7 @@ public:
 		unsigned long long cut_node_hits = 0;
 		unsigned long long all_node_hits = 0;
 		unsigned long long unknown_hits = 0;
+		unsigned long long failed_inserts = 0;
 	};
 
 	mutable Stat _stats;
@@ -61,8 +62,10 @@ public:
 			*entry = TTEntry(hash, depth, score, move, nodeType);
 			++_entry_count;
 		}
-		else if(entry->depth < depth)
+		else if (entry->depth < depth)
 			*entry = TTEntry(hash, depth, score, move, nodeType);
+		else if (entry->hash != hash)
+			++_stats.failed_inserts;
 	}
 
 	std::pair<int, Move> probe(unsigned long long hash, int depth, int alpha, int beta)
