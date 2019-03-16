@@ -69,6 +69,9 @@
     <ClInclude Include="see.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="evaluation_table.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="constants.cpp">

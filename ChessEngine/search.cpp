@@ -20,7 +20,7 @@ namespace Search
 
 			updateNodesPerSec();
 
-			std::cout << "info hashfull " << (int)(ab_tr_table.usage() * 1000) << std::endl;
+			std::cout << "info hashfull " << (int)(transposition_table.usage() * 1000) << std::endl;
 
 			if (stop)
 				break;
@@ -53,8 +53,8 @@ namespace Search
 		Stats = { 0 };
 		std::vector<std::vector<Move>> pv(maxdepth + 1);
 
-		ab_tr_table.clear();
-		qs_tr_table.clear();
+		transposition_table.clear();
+		evaluation_table.clear();
 
 		std::fill(killer_moves, killer_moves + MAX_DEPTH, std::make_pair(Move(), Move()));
 
@@ -141,7 +141,7 @@ namespace Search
 	void sendStats()
 	{
 		std::cout << std::endl
-			<< "info string " << "\thash table - failed inserts:\t" << ab_tr_table.getStats()->failed_inserts << std::endl
+			<< "info string " << "\thash table - failed inserts:\t" << transposition_table.getStats()->failed_inserts << std::endl
 			<< "info string " << "\tpv_search_researches:\t" << Search::Stats.pv_search_research_count << std::endl
 			<< "info string " << "\tkiller move cutoffs:\t" << Search::Stats.killer_move_cutoffs << std::endl
 			<< "info string " << "\thash move cutoffs:\t" << Search::Stats.hash_move_cutoffs << std::endl

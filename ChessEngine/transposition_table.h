@@ -3,34 +3,11 @@
 #include "move.h"
 #include "board.h"
 
-
-enum NodeType
-{
-	PV_NODE,
-	CUT_NODE,
-	ALL_NODE
-};
-
-struct TTEntry
-{
-	TTEntry(unsigned long long hash, int depth, int score, Move move, NodeType nodeType) :
-		hash(hash), depth(depth), score(score), move(move), nodeType(nodeType), valid(true) {}
-
-	TTEntry() : valid(false) {}
-
-	unsigned long long hash;
-	int depth;
-	int score;
-	Move move;
-	NodeType nodeType;
-	bool valid;
-};
-
 class TranspositionTable
 {
 public:
 	TranspositionTable(size_t mb) { resize(mb); }
-	~TranspositionTable() { delete _entries; }
+	~TranspositionTable() { if (_entries) delete _entries; }
 
 	struct Stat
 	{
@@ -45,25 +22,26 @@ public:
 
 	void resize(size_t mb)
 	{
-		delete _entries;
+		if (_entries)
+			delete _entries;
 
-		_size = (mb * 1024 * 1024) / sizeof(TTEntry);
-		_entries = new TTEntry[_size];
+		_size = (mb * 1024 * 1024) / sizeof(Entry);
+		_entries = new Entry[_size];
 
 		clear();
 	}
 
-	void insertEntry(unsigned long long hash, int depth, int score, Move move, NodeType nodeType)
+	void insert(unsigned long long hash, int depth, int score, Move move, ScoreType nodeType)
 	{
-		TTEntry *entry = _getEntry(hash);
+		Entry *entry = _getEntry(hash);
 
 		if (!entry->valid)
 		{
-			*entry = TTEntry(hash, depth, score, move, nodeType);
+			*entry = Entry(hash, depth, score, move, nodeType);
 			++_entry_count;
 		}
 		else if (entry->depth < depth)
-			*entry = TTEntry(hash, depth, score, move, nodeType);
+			*entry = Entry(hash, depth, score, move, nodeType);
 		else if (entry->hash != hash)
 			++_stats.failed_inserts;
 	}
@@ -71,23 +49,24 @@ public:
 	std::pair<int, Move> probe(unsigned long long hash, int depth, int alpha, int beta)
 	{
 		assert(hash != 0);
+		assert(_entries != nullptr);
 
 		std::pair<int, Move> pair = std::make_pair(SCORE_INVALID, Move());
-		TTEntry *entry = _getEntry(hash);
+		Entry *entry = _getEntry(hash);
 
 		if (entry->hash == hash)
 		{
-			if ((entry->nodeType == CUT_NODE || entry->nodeType == PV_NODE) && beta <= entry->score)
+			if ((entry->nodeType == LOWER_BOUND || entry->nodeType == EXACT) && beta <= entry->score)
 			{
 				++_stats.cut_node_hits;
 				pair = std::make_pair(beta, entry->move);
 			}
-			else if ((entry->nodeType == ALL_NODE || entry->nodeType == PV_NODE) && entry->score <= alpha)
+			else if ((entry->nodeType == UPPER_BOUND || entry->nodeType == EXACT) && entry->score <= alpha)
 			{
 				++_stats.all_node_hits;
 				pair = std::make_pair(alpha, Move());
 			}
-			else if (entry->nodeType == PV_NODE)
+			else if (entry->nodeType == EXACT)
 			{
 				++_stats.pv_node_hits;
 				pair = std::make_pair(entry->score, entry->move);
@@ -102,7 +81,7 @@ public:
 
 	void clear()
 	{
-		std::memset(_entries, 0, _size * sizeof(TTEntry));
+		std::memset(_entries, 0, _size * sizeof(Entry));
 		_entry_count = 0;
 	}
 
@@ -117,12 +96,27 @@ public:
 	}
 
 private:
-	TTEntry * _getEntry(unsigned long long hash)
+	struct Entry
+	{
+		Entry(unsigned long long hash, int depth, int score, Move move, ScoreType nodeType) :
+			hash(hash), depth(depth), score(score), move(move), nodeType(nodeType), valid(true) {}
+
+		Entry() : valid(false) {}
+
+		unsigned long long hash;
+		int depth;
+		int score;
+		Move move;
+		ScoreType nodeType;
+		bool valid;
+	};
+
+	Entry * _getEntry(unsigned long long hash)
 	{
 		return &_entries[hash % _size];
 	}
 
 	size_t _size;
-	TTEntry *_entries;
+	Entry *_entries;
 	size_t _entry_count = 0;
 };

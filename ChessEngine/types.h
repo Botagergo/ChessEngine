@@ -123,3 +123,10 @@ enum ScoreConstant
 	SCORE_INFINITY = 32768,
 	SCORE_INVALID = 32769
 };
+
+enum ScoreType
+{
+	EXACT,
+	LOWER_BOUND,
+	UPPER_BOUND
+};

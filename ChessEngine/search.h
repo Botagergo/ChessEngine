@@ -6,6 +6,7 @@
 #include "board.h"
 #include "config.h"
 #include "evaluation.h"
+#include "evaluation_table.h"
 #include "movegen.h"
 #include "transposition_table.h"
 #include "types.h"
@@ -19,8 +20,8 @@ namespace Search
 	extern bool debug;
 	extern bool stop;
 
-	static TranspositionTable ab_tr_table(DEFAULT_HASH_TABLE_SIZE);
-	static TranspositionTable qs_tr_table(DEFAULT_HASH_TABLE_SIZE);
+	static TranspositionTable transposition_table(DEFAULT_HASH_TABLE_SIZE);
+	static EvaluationTable evaluation_table(DEFAULT_HASH_TABLE_SIZE);
 
 	static std::pair<Move, Move> killer_moves[MAX_DEPTH];
 
@@ -71,7 +72,7 @@ namespace Search
 		Move hash_move = Move();
 
 #ifdef TRANSPOSITION_TABLE
-		auto hash = ab_tr_table.probe(board.hash(), depthleft, alpha, beta);
+		auto hash = transposition_table.probe(board.hash(), depthleft, alpha, beta);
 		if (hash.first == alpha || hash.first == beta)
 		{
 			assert(ply);
@@ -175,7 +176,7 @@ SearchEnd:
 
 
 				assert(mg.curr() != Move());
-				ab_tr_table.insertEntry(board.hash(), depthleft, beta, mg.curr(), CUT_NODE);
+				transposition_table.insert(board.hash(), depthleft, beta, mg.curr(), LOWER_BOUND);
 				return beta;
 			}
 			if (score > alpha)
@@ -211,12 +212,12 @@ SearchEnd:
 
 		if (alpha == alpha_orig)
 		{
-			ab_tr_table.insertEntry(board.hash(), depthleft, alpha, Move(), ALL_NODE);
+			transposition_table.insert(board.hash(), depthleft, alpha, Move(), UPPER_BOUND);
 		}
 		else if (pv)
 		{
 			assert((*pv)[0] != Move());
-			ab_tr_table.insertEntry(board.hash(), depthleft, alpha, (*pv)[0], PV_NODE);
+			transposition_table.insert(board.hash(), depthleft, alpha, (*pv)[0], EXACT);
 		}
 
 		return alpha;
@@ -227,12 +228,12 @@ SearchEnd:
 	{
 		++Stats.quiescence_nodes;
 
-#ifdef TRANSPOSITION_TABLE
-		auto hash = qs_tr_table.probe(board.hash(), 0, alpha, beta);
-		if (hash.first != SCORE_INVALID)
-			return hash.first;
-#endif
-		int score = Evaluation::evaluate<toMove>(board);
+		int score = evaluation_table.probe(board.hash(), alpha, beta);
+		if (score != SCORE_INVALID)
+		{
+			score = Evaluation::evaluate<toMove>(board);
+			evaluation_table.insert(board.hash(), score, EXACT);
+		}
 
 		if (score >= beta)
 			return beta;
@@ -254,7 +255,7 @@ SearchEnd:
 			if (score >= beta)
 			{
 				++Stats.quiescence_cutoffs;
-				qs_tr_table.insertEntry(board.hash(), 0, score, Move(), CUT_NODE);
+				evaluation_table.insert(board.hash(), score, LOWER_BOUND);
 				return beta;
 			}
 			if (score > alpha)
@@ -262,9 +263,9 @@ SearchEnd:
 		}
 
 		if (alpha > alpha_orig)
-			qs_tr_table.insertEntry(board.hash(), 0, alpha, Move(), PV_NODE);
+			evaluation_table.insert(board.hash(), alpha, EXACT);
 		else
-			qs_tr_table.insertEntry(board.hash(), 0, alpha, Move(), ALL_NODE);
+			evaluation_table.insert(board.hash(), alpha, UPPER_BOUND);
 
 		return alpha;
 	}
