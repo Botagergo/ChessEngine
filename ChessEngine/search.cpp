@@ -10,6 +10,9 @@ namespace Search
 	bool ponder = false;
 	bool passed_maxdepth = false;
 
+	TranspositionTable transposition_table = TranspositionTable(DEFAULT_HASH_TABLE_SIZE);
+	EvaluationTable evaluation_table = EvaluationTable(DEFAULT_HASH_TABLE_SIZE);
+
 	std::thread search_thrd = {};
 
 	void infoThread()
@@ -57,12 +60,7 @@ namespace Search
 
 		transposition_table.clear();
 		evaluation_table.clear();
-
 		std::fill(killer_moves, killer_moves + MAX_DEPTH, std::make_pair(Move(), Move()));
-
-		stop = false;
-		std::thread info(infoThread);
-		info.detach();
 
 		passed_maxdepth = false;
 
@@ -72,12 +70,12 @@ namespace Search
 		SearchInfo.last_time = std::chrono::steady_clock::now();
 		SearchInfo.last_node_count = 0;
 
-		for (int depth = 1;; ++depth)
-		{
-			if (!ponder && depth > maxdepth)
-				break;
+		stop = false;
+		std::thread info(infoThread);
+		info.detach();
 
-			// Ez azért kell, hogy ha ponder módba vagyunk, akkor ponderhit esetén ki tudjunk lépni a keresésből
+		for (int depth = 1; ponder || depth <= maxdepth; ++depth)
+		{
 			if (depth > maxdepth)
 				passed_maxdepth = true;
 
@@ -104,7 +102,10 @@ namespace Search
 
 		stop = true;
 
-		Move ponder_move = searched_depth >= 2 ? pv[searched_depth][1] : Move();
+		Move ponder_move = Move();
+		if (searched_depth >= 2)
+			ponder_move = pv[searched_depth][1];
+
 		sendBestMove(pv[searched_depth][0], ponder_move);
 
 		Stats.avg_searched_moves = (float)(Stats.alpha_beta_nodes / (double)Stats._move_gen_count);

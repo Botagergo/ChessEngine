@@ -22,8 +22,8 @@ namespace Search
 	extern bool ponder;
 	extern bool passed_maxdepth;
 
-	static TranspositionTable transposition_table(DEFAULT_HASH_TABLE_SIZE);
-	static EvaluationTable evaluation_table(DEFAULT_HASH_TABLE_SIZE);
+	extern TranspositionTable transposition_table;
+	extern EvaluationTable evaluation_table;
 
 	static std::pair<Move, Move> killer_moves[MAX_DEPTH];
 
@@ -68,10 +68,7 @@ namespace Search
 
 		history[ply] = board.hash();
 
-		if (Search::stop)
-			return SCORE_INVALID;
-
-		if (passed_maxdepth && !ponder)
+		if (Search::stop || passed_maxdepth && !ponder)
 			return SCORE_INVALID;
 
 		Move hash_move = Move();

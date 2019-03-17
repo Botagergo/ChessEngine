@@ -255,8 +255,8 @@ void setoptionReceived(std::string name, std::string value)
 		std::stringstream ss(value);
 		int size_mb;
 		ss >> size_mb;
-		Search::transposition_table = TranspositionTable(size_mb);
-		Search::evaluation_table = EvaluationTable(size_mb);
+		Search::transposition_table.resize(size_mb);
+		Search::evaluation_table.resize(size_mb);
 	}
 }
 

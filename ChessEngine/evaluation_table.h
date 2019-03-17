@@ -57,8 +57,11 @@ public:
 
 	void clear()
 	{
-		std::memset(_entries, 0, _size * sizeof(Entry));
-		_entry_count = 0;
+		if (_entries != nullptr)
+		{
+			std::memset(_entries, 0, _size * sizeof(Entry));
+			_entry_count = 0;
+		}
 	}
 
 private:
@@ -81,6 +84,6 @@ private:
 	}
 
 	size_t _size;
-	Entry *_entries;
+	Entry *_entries = nullptr;
 	size_t _entry_count = 0;
 };
