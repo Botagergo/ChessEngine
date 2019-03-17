@@ -1,4 +1,4 @@
-#include <chrono>
+﻿#include <chrono>
 #include <iostream>
 #include <thread>
 #include "search.h"
@@ -7,6 +7,8 @@ namespace Search
 {
 	bool debug = false;
 	bool stop = false;
+	bool ponder = false;
+	bool passed_maxdepth = false;
 
 	std::thread search_thrd = {};
 
@@ -51,7 +53,7 @@ namespace Search
 	void search(const Board & board, int maxdepth)
 	{
 		Stats = { 0 };
-		std::vector<std::vector<Move>> pv(maxdepth + 1);
+		std::vector<std::vector<Move>> pv(MAX_DEPTH);
 
 		transposition_table.clear();
 		evaluation_table.clear();
@@ -62,14 +64,23 @@ namespace Search
 		std::thread info(infoThread);
 		info.detach();
 
-		int score, depth;
-		Move best_move;
+		passed_maxdepth = false;
+
+		int score;
+		int searched_depth = 0;
 
 		SearchInfo.last_time = std::chrono::steady_clock::now();
 		SearchInfo.last_node_count = 0;
 
-		for (depth = 1; depth <= maxdepth; ++depth)
+		for (int depth = 1;; ++depth)
 		{
+			if (!ponder && depth > maxdepth)
+				break;
+
+			// Ez azért kell, hogy ha ponder módba vagyunk, akkor ponderhit esetén ki tudjunk lépni a keresésből
+			if (depth > maxdepth)
+				passed_maxdepth = true;
+
 			if (board.toMove() == WHITE)
 				score = alphaBeta<WHITE, true, false>(board, -SCORE_INFINITY, SCORE_INFINITY, depth, 0, &pv[depth]);
 			else
@@ -84,14 +95,17 @@ namespace Search
 				score *= -1;
 
 			sendPrincipalVariation(pv[depth], depth, score, false);
-			best_move = pv[depth][0];
 
 			if (SCORE_MIN_MATE <= abs(score) && abs(score) <= SCORE_MAX_MATE)
 				break;
+
+			++searched_depth;
 		}
 
 		stop = true;
-		sendBestMove(best_move);
+
+		Move ponder_move = searched_depth >= 2 ? pv[searched_depth][1] : Move();
+		sendBestMove(pv[searched_depth][0], ponder_move);
 
 		Stats.avg_searched_moves = (float)(Stats.alpha_beta_nodes / (double)Stats._move_gen_count);
 
@@ -109,9 +123,12 @@ namespace Search
 		return false;
 	}
 
-	void sendBestMove(Move move)
+	void sendBestMove(Move move, Move ponder_move)
 	{
-		std::cout << "bestmove " << move.toAlgebraic() << std::endl;
+		std::cout << "bestmove " << move.toAlgebraic();
+		if (ponder_move != Move())
+			std::cout << " ponder " << ponder_move.toAlgebraic();
+		std::cout << std::endl;
 	}
 
 	void sendPrincipalVariation(const std::vector<Move> & pv, int depth, int score, bool mate)

@@ -19,6 +19,8 @@ namespace Search
 
 	extern bool debug;
 	extern bool stop;
+	extern bool ponder;
+	extern bool passed_maxdepth;
 
 	static TranspositionTable transposition_table(DEFAULT_HASH_TABLE_SIZE);
 	static EvaluationTable evaluation_table(DEFAULT_HASH_TABLE_SIZE);
@@ -50,7 +52,7 @@ namespace Search
 	void updateNodesPerSec();
 	void infoThread();
 
-	void sendBestMove(Move move);
+	void sendBestMove(Move move, Move ponder_move);
 	void sendPrincipalVariation(const std::vector<Move> & pv, int depth, int score, bool mate);
 	void sendCurrentMove(Move move, int pos);
 
@@ -67,6 +69,9 @@ namespace Search
 		history[ply] = board.hash();
 
 		if (Search::stop)
+			return SCORE_INVALID;
+
+		if (passed_maxdepth && !ponder)
 			return SCORE_INVALID;
 
 		Move hash_move = Move();
@@ -101,14 +106,13 @@ namespace Search
 		}
 #endif
 
-
 		++Stats._move_gen_count;
 		int curr_pos = 0;
 		int alpha_orig = alpha;
 		int searched_moves = 0;
 		int score;
 		std::vector<Move> new_pv;
-		std::vector<Move> * new_pv_ptr = 0;
+		std::vector<Move> * new_pv_ptr = nullptr;
 
 		if (pvNode)
 		{
@@ -193,6 +197,7 @@ SearchEnd:
 					assert(new_pv_ptr != nullptr && pv != nullptr);
 
 					pv->resize(depthleft);
+
 					(*pv)[0] = mg.curr();
 					std::copy(new_pv.begin(), new_pv.end(), pv->begin() + 1);
 				}

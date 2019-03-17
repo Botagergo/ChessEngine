@@ -59,7 +59,8 @@ int main(int argc, char *argv[])
 		iss >> std::skipws >> token;
 		if (token == "uci")
 		{
-			std::cout << "option name Hash min 32 max 2048" << std::endl;
+			std::cout << "option name Hash type spin min 2 max 4096 default 32" << std::endl;
+			std::cout << "option name Ponder type check default true" << std::endl;
 			std::cout << "option name maxdepth type string" << std::endl;
 			std::cout << "uciok" << std::endl;
 		}
@@ -132,12 +133,14 @@ int main(int argc, char *argv[])
 			std::map<command, CommandParam> commands;
 			commands[command::depth].number = maxdepth;
 
+			Search::ponder = false;
+
 			while (iss >> token)
 				if (token == "searchmoves")
 					while (iss >> token)
 						commands[command::search_moves].str += std::string(" ", commands[command::search_moves].str.empty() ? 0 : 1) + token;
 				else if (token == "ponder")
-					commands[command::ponder];
+					Search::ponder = true;
 				else if (token == "wtime")
 					iss >> commands[command::white_time].number;
 				else if (token == "btime")
@@ -167,6 +170,7 @@ int main(int argc, char *argv[])
 		}
 		else if (token == "ponderhit")
 		{
+			Search::ponder = false;
 		}
 		else if (token == "quit")
 		{
