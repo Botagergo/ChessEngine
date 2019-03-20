@@ -89,6 +89,8 @@ namespace Search
 			if (score == SCORE_INVALID)
 				break;
 
+			++searched_depth;
+
 			if (board.toMove() == BLACK)
 				score *= -1;
 
@@ -96,8 +98,6 @@ namespace Search
 
 			if (SCORE_MIN_MATE <= abs(score) && abs(score) <= SCORE_MAX_MATE)
 				break;
-
-			++searched_depth;
 		}
 
 		stop = true;
