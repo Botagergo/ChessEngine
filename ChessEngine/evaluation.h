@@ -86,6 +86,38 @@ namespace Evaluation
 
 		return score;
 	}
+	template <Color color>
+	Score evaluateKingSafety(const Board & board)
+	{
+		Score score;
+
+		const static Bitboard KingShield[] = { 0xe000, 0xe0000000000000 };
+		const static Bitboard QueenShield[] = { 0x700, 0x7000000000000 };
+
+		int shelter1 = 0, shelter2 = 0;
+
+		constexpr Direction shift_dir = color == WHITE ? NORTH : SOUTH;
+
+		int king_file = Util::getFile(Util::bitScanForward(board.pieces(color, KING)));
+		Bitboard pawns = board.pieces(color, PAWN);
+
+		if (king_file > E_FILE)
+		{
+			shelter1 = Util::popCount(pawns & KingShield[color]);
+			shelter2 = Util::popCount(pawns & Util::shift<shift_dir>(KingShield[color]));
+		}
+		else if (king_file < D_FILE)
+		{
+			shelter1 = Util::popCount(pawns & QueenShield[color]);
+			shelter2 = Util::popCount(pawns & Util::shift<shift_dir>(QueenShield[color]));
+		}
+
+		score.mg += (int)(shelter1 * 5.5 + shelter2 * 2);
+		score.eg += shelter1 + shelter2;
+
+		return score;
+	}
+
 
 	template <Color color>
 	int evaluate(const Board & board)
@@ -115,6 +147,9 @@ namespace Evaluation
 
 		int our_pinned_score = 10 * Util::popCount(board.pinnedPieces<color>());
 		int their_pinned_score = 10 * Util::popCount(board.pinnedPieces<~color>());
+
+		score += evaluateKingSafety<color>(board);
+		score -= evaluateKingSafety<~color>(board);
 
 		score -= Score(our_pinned_score, our_pinned_score);
 		score += Score(their_pinned_score, their_pinned_score);
