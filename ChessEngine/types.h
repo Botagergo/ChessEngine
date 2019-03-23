@@ -111,8 +111,10 @@ struct Score
 	void operator-=(const Score &s) { mg -= s.mg; eg -= s.eg; }
 
 	Score operator-() const { return Score(-mg, -eg); }
-	Score operator*(double d) const { return Score((int)(mg * d), (int)(eg * d)); }
 };
+
+Score operator*(double d, const Score &score);
+Score operator*(const Score &score, double d);
 
 enum ScoreConstant
 {

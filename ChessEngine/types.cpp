@@ -121,3 +121,14 @@ Square operator++(Square &square)
 	square = static_cast<Square>(static_cast<int>(square) + 1);
 	return square;
 }
+
+Score operator*(double d, const Score &score)
+{
+	return Score((int)(score.mg * d), (int)(score.eg * d));
+}
+
+Score operator*(const Score &score, double d)
+{
+	return Score((int)(score.mg * d), (int)(score.eg * d));
+}
+
