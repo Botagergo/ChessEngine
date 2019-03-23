@@ -25,7 +25,7 @@ namespace UnitTests
 	TEST_CLASS(UnitTest1)
 	{
 	public:
-		TEST_METHOD(shiftTest)
+		TEST_METHOD(shift_Test)
 		{
 			Bitboard bb = C64(0x920000091002002);
 
@@ -47,7 +47,7 @@ namespace UnitTests
 			Assert::AreEqual(Util::verticalFlip(C64(0x1000200020020004)), C64(0x400022000200010));
 		}
 
-		TEST_METHOD(pieceTest)
+		TEST_METHOD(piece_Test)
 		{
 			Assert::AreEqual(PAWN, toPieceType(WHITE_PAWN));
 			Assert::AreEqual(PAWN, toPieceType(BLACK_PAWN));
@@ -89,13 +89,13 @@ namespace UnitTests
 			Assert::AreEqual(QUEEN, charToPieceType('q'));
 		}
 
-		TEST_METHOD(pawnPushTargetsTest)
+		TEST_METHOD(pawnPushTargets_Test)
 		{
 			Assert::AreEqual(pawnPushTargets<WHITE>(C64(0x1000000000082100), FullBB), C64(0x29210000));
 			Assert::AreEqual(pawnPushTargets<WHITE>(C64(0x2800002100), FullBB ^ C64(0x480001200000)), C64(0x200000010000));
 		}
 
-		TEST_METHOD(pawnAttacksTest)
+		TEST_METHOD(pawnAttacks_Test)
 		{
 			Bitboard pawns = C64(0x881000000040000);
 			Bitboard attacks = C64(0x420000000a000000);
@@ -104,7 +104,7 @@ namespace UnitTests
 			Assert::AreEqual(pawnAttacks<BLACK>(Util::verticalFlip(pawns)), Util::verticalFlip(attacks));
 		}
 
-		TEST_METHOD(knightAttacksTest)
+		TEST_METHOD(knightAttacks_Test)
 		{
 			initSquareBB();
 			initAttackTables();
@@ -126,7 +126,7 @@ namespace UnitTests
 			Assert::AreEqual(knightAttacks(H1), C64(0x402000));
 		}
 
-		TEST_METHOD(bishopAttacksTest)
+		TEST_METHOD(bishopAttacks_Test)
 		{
 			initSquareBB();
 			initAttackTables();
@@ -139,7 +139,7 @@ namespace UnitTests
 			Assert::AreEqual(bishopAttacks(D4, C64(0x21000140000)), C64(0x21400140000));
 		}
 
-		TEST_METHOD(rookAttacksTest)
+		TEST_METHOD(rookAttacks_Test)
 		{
 			initSquareBB();
 			initAttackTables();
@@ -151,13 +151,13 @@ namespace UnitTests
 			Assert::AreEqual(rookAttacks(H5, C64(0x802080000000)), C64(0x806080000000));
 		}
 
-		TEST_METHOD(queenAttacks)
+		TEST_METHOD(queenAttacks_Test)
 		{
 			initSquareBB();
 			initAttackTables();
 		}
 
-		TEST_METHOD(bitboardIteratorTest)
+		TEST_METHOD(bitboardIterator_Test)
 		{
 			BitboardIterator<Square> squares(C64(0));
 			auto b1 = squares.begin();
@@ -178,7 +178,7 @@ namespace UnitTests
 			Assert::IsTrue(std::equal(bitboards.begin(), bitboards.end(), expected2.begin()));
 		}
 
-		TEST_METHOD(Move_test)
+		TEST_METHOD(Move_Test)
 		{
 			initSquareBB();
 			initAttackTables();
@@ -204,7 +204,7 @@ namespace UnitTests
 			Assert::IsFalse(move.isPromotion());
 		}
 
-		TEST_METHOD(Board_fromFenTest) //TODO: add more tests
+		TEST_METHOD(Board_fromFen_Test) //TODO: add more tests
 		{
 			initSquareBB();
 			initAttackTables();
@@ -263,7 +263,7 @@ namespace UnitTests
 			}
 		}
 
-		TEST_METHOD(zobristTest)
+		TEST_METHOD(zobrist_Test)
 		{
 			initSquareBB();
 			initAttackTables();

@@ -14,13 +14,13 @@ using namespace std;
 const std::string start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 void setoptionReceived(std::string name, std::string value);
-void perft_received(Board board, int depth, std::vector<Move> moves, bool per_move, bool full);
-void printPerftRes(Perft::PerftResult res);
+void perftReceived(Board board, int depth, std::vector<Move> moves, bool per_move, bool full);
+void printPerftRes(const Perft::PerftResult &res);
 
 Board board;
 int maxdepth = 7;
 
-enum class command
+enum command
 {
 	search_moves,
 	ponder,
@@ -234,7 +234,7 @@ int main(int argc, char *argv[])
 				moves.push_back(Move::parse(board, move));
 			}
 
-			perft_received(board, depth, moves, per_move, full);
+			perftReceived(board, depth, moves, per_move, full);
 		}
 		else
 		{
@@ -260,7 +260,7 @@ void setoptionReceived(std::string name, std::string value)
 	}
 }
 
-void perft_received(Board board, int depth, std::vector<Move> moves, bool per_move, bool full)
+void perftReceived(Board board, int depth, std::vector<Move> moves, bool per_move, bool full)
 {
 	for (auto move : moves)
 	{
@@ -299,7 +299,7 @@ void perft_received(Board board, int depth, std::vector<Move> moves, bool per_mo
 	}
 }
 
-void printPerftRes(Perft::PerftResult res)
+void printPerftRes(const Perft::PerftResult& res)
 {
 	std::cout << "nodes\t\t\t" << res.nodes << std::endl;
 	std::cout << "captures\t\t" << res.captures << std::endl;
