@@ -23,6 +23,7 @@
     <ProjectGuid>{65DB1D31-983F-44DB-81B7-AC3BA8D7600F}</ProjectGuid>
     <RootNamespace>ChessEngine</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <ProjectName>Engine</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -137,14 +138,16 @@
     <ClInclude Include="types.h" />
     <ClInclude Include="util.h" />
     <ClInclude Include="zobrist.h" />
+    <ClInclude Include="evaluation.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="attacks.cpp" />
     <ClCompile Include="board.cpp" />
     <ClCompile Include="constants.cpp" />
     <ClCompile Include="attack_tables.cpp" />
-    <ClCompile Include="evaluation.cpp" />
-    <ClCompile Include="evaluation.h" />
+    <ClCompile Include="evaluation.cpp">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
+    </ClCompile>
     <ClCompile Include="move.cpp" />
     <ClCompile Include="movegen.cpp" />
     <ClCompile Include="perft.cpp" />

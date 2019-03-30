@@ -30,16 +30,13 @@ Bitboard pseudoBishopAttacks(Square square);
 
 template <Color color>
 Bitboard pawnSinglePushTargets(Bitboard pawns, Bitboard empty) {
-	if (color == WHITE)
-		return Util::shift<NORTH>(pawns) & empty;
-	else
-		return Util::shift<SOUTH>(pawns) & empty;
+	return Util::shift<Util::forwardDirection<color>()>(pawns) & empty;
 }
 
 template <Color color>
 Bitboard pawnDoublePushTargets(Bitboard pawns, Bitboard empty) {
 	Bitboard res = pawnSinglePushTargets<color>(pawns, empty);
-	return pawnSinglePushTargets<color>(res, empty) & (color == WHITE ? RankBB[RANK_4] : RankBB[RANK_5]);
+	return pawnSinglePushTargets<color>(res, empty) & RankBB[Util::relativeRank<color, RANK_4>()];
 }
 
 
@@ -52,10 +49,8 @@ Bitboard pawnPushTargets(Bitboard pawns, Bitboard empty)
 
 template <Color color>
 Bitboard pawnAttacks(Bitboard pawns) {
-	if (color == WHITE)
-		return Util::shift<NORTHWEST>(pawns) | Util::shift<NORTHEAST>(pawns);
-	else
-		return Util::shift<SOUTHWEST>(pawns) | Util::shift<SOUTHEAST>(pawns);
+	return Util::shift<Util::relativeDirection<color, NORTHWEST>()>(pawns)
+		| Util::shift<Util::relativeDirection<color, NORTHEAST>()>(pawns);
 }
 
 Bitboard knightAttacks(Square knight);

@@ -122,6 +122,18 @@ Square operator++(Square &square)
 	return square;
 }
 
+File operator++(File &file)
+{
+	file = static_cast<File>(static_cast<int>(file) + 1);
+	return file;
+}
+
+Rank operator++(Rank &rank)
+{
+	rank = static_cast<Rank>(static_cast<int>(rank) + 1);
+	return rank;
+}
+
 Score operator*(double d, const Score &score)
 {
 	return Score((int)(score.mg * d), (int)(score.eg * d));

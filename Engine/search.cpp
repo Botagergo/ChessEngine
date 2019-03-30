@@ -25,7 +25,7 @@ namespace Search
 
 			updateNodesPerSec();
 
-			std::cout << "info hashfull " << (int)(transposition_table.usage() * 1000) << std::endl;
+			//std::cout << "info hashfull " << (int)(transposition_table.usage() * 1000) << std::endl;
 
 			if (stop)
 				break;
@@ -40,8 +40,8 @@ namespace Search
 		std::chrono::steady_clock::time_point curr_time = std::chrono::steady_clock::now();
 		unsigned long long time_diff = std::chrono::duration_cast<std::chrono::microseconds>(curr_time - SearchInfo.last_time).count();
 
-		std::cout << "info nodes " << curr_node_count
-			<< " nps " << (int)(node_diff * (1000000.0 / time_diff)) << std::endl;
+		/*std::cout << "info nodes " << curr_node_count
+			<< " nps " << (int)(node_diff * (1000000.0 / time_diff)) << std::endl;*/
 
 		SearchInfo.last_node_count = curr_node_count;
 		SearchInfo.last_time = curr_time;
@@ -127,8 +127,8 @@ namespace Search
 	void sendBestMove(Move move, Move ponder_move)
 	{
 		std::cout << "bestmove " << move.toAlgebraic();
-		if (ponder_move != Move())
-			std::cout << " ponder " << ponder_move.toAlgebraic();
+		//if (ponder_move != Move())
+		//	std::cout << " ponder " << ponder_move.toAlgebraic();
 		std::cout << std::endl;
 	}
 

@@ -38,7 +38,7 @@ const Score Evaluation::Mobility[PIECE_TYPE_NB][32] = {
 	{}
 };
 
-const Score Evaluation::TempoBonus = S(10, 10);
+const Score Evaluation::TempoBonus = S(4, 4);
 
 const Score Evaluation::BishopPair = S(10, 50);
 

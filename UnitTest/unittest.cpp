@@ -108,7 +108,7 @@ namespace UnitTests
 		{
 			initSquareBB();
 			initAttackTables();
-			
+
 			Assert::AreEqual(knightAttacks(E4), C64(0x284400442800));
 			Assert::AreEqual(knightAttacks(B4), C64(0x50800080500));
 			Assert::AreEqual(knightAttacks(D7), C64(0x2200221400000000));
@@ -208,7 +208,7 @@ namespace UnitTests
 		{
 			initSquareBB();
 			initAttackTables();
- 
+
 			Board b = Board::fromFen("5k2/2p5/1n2p3/8/4pP2/4P3/6PP/R2QK1NR b Q f3 0 1 ");
 
 			Assert::IsFalse(b.canCastle(BLACK, KINGSIDE));
@@ -270,13 +270,13 @@ namespace UnitTests
 			Zobrist::initZobristHashing();
 
 			vector<string> fen1 = { "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ",
-				"r1bqkbnr/ppppp1pp/2n5/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3"};
+				"r1bqkbnr/ppppp1pp/2n5/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3" };
 			vector<vector<string>> moves = {
-				{"e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "g8f6", "e1g1", "d7d6", "b1c3", "f8e7", "d2d3", "e8g8"},
-				{"g1f3", "g8f6", "f3g1", "f6g8"}
+				{ "e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "g8f6", "e1g1", "d7d6", "b1c3", "f8e7", "d2d3", "e8g8" },
+			{ "g1f3", "g8f6", "f3g1", "f6g8" }
 			};
 			vector<string> fen2 = { "r1bq1rk1/ppp1bppp/2np1n2/4p3/2B1P3/2NP1N2/PPP2PPP/R1BQ1RK1 w - - 1 7 ",
-				"r1bqkbnr/ppppp1pp/2n5/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3"};
+				"r1bqkbnr/ppppp1pp/2n5/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3" };
 
 			vector<bool> equals = { true, false };
 

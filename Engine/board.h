@@ -58,6 +58,8 @@ public:
 
 	unsigned long long hash() const;
 
+	Board mirror() const;
+
 	const static int AllCastlingRights;
 	const static int CastleFlag[COLOR_NB][SIDE_NB];
 

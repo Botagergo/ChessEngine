@@ -100,6 +100,9 @@ PieceType operator++(PieceType &piece);
 
 Square operator++(Square &square);
 
+File operator++(File &file);
+Rank operator++(Rank &rank);
+
 struct Score
 {
 	explicit Score(int mg = 0, int eg = 0) : mg(mg), eg(eg) {}

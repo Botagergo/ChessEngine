@@ -58,20 +58,58 @@ namespace Util
 	Bitboard northFill(Bitboard bb);
 
 	template <Color color>
-	constexpr Bitboard backRank()
-	{
-		return color == WHITE ? Constants::RankBB[RANK_8] : Constants::RankBB[RANK_1];
-	}
-
-	template <Color color>
-	Rank relativeRank(Rank rank)
+	constexpr Rank relativeRank(Rank rank)
 	{
 		return Rank(rank ^ (color * 7));
 	}
 
+	template <Color color, Rank rank>
+	constexpr Rank relativeRank()
+	{
+		return relativeRank<color>(rank);
+	}
+
 	template <Color color>
-	Square relativeSquare(Square square)
+	constexpr Square relativeSquare(Square square)
 	{
 		return Square(square ^ (56 * color));
+	}
+
+	template <Color color, Direction dir>
+	constexpr Direction relativeDirection()
+	{
+		if (color == WHITE)
+			return dir;
+
+		switch (dir)
+		{
+		case EAST:
+		case WEST:
+			return dir;
+		case NORTH:
+			return SOUTH;
+		case NORTHEAST:
+			return SOUTHEAST;
+		case SOUTHEAST:
+			return NORTHEAST;
+		case SOUTHWEST:
+			return NORTHWEST;
+		case NORTHWEST:
+			return SOUTHWEST;
+		default:
+			assert(false);
+		}
+	}
+
+	template <Color color>
+	constexpr Direction forwardDirection()
+	{
+		return relativeDirection<color, NORTH>();
+	}
+
+	template <Color color>
+	constexpr Bitboard backRank()
+	{
+		return relativeRank<color, RANK_8>();
 	}
 }

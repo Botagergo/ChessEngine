@@ -336,6 +336,12 @@ unsigned long long Board::hash() const
 	return _hash;
 }
 
+Board Board::mirror() const
+{
+	Board board;
+	return board;
+}
+
 void Board::_updateCastlingRights(const Move move)
 {
 	unsigned char new_castling_rights = _castling_rights;

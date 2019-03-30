@@ -43,7 +43,7 @@ namespace Evaluation
 	{
 		Score score = PawnIslands[islandCount(board.pieces(color, PAWN))];
 
-		for (int file = 0; file < FILE_NB; ++file)
+		for (File file = A_FILE; file < FILE_NB; ++file)
 		{
 			Bitboard pawns = board.pieces(color, PAWN) & FileBB[file];
 
@@ -73,7 +73,7 @@ namespace Evaluation
 
 		for (Square rook : BitboardIterator<Square>(board.pieces(color, ROOK)))
 		{
-			Bitboard front_squares = color == WHITE ? SlidingAttackTable[SOUTH][rook] : SlidingAttackTable[NORTH][rook];
+			Bitboard front_squares = SlidingAttackTable[Util::forwardDirection<color>()][rook];
 
 			if (!(board.pieces(color, PAWN) & front_squares))
 			{
@@ -96,20 +96,18 @@ namespace Evaluation
 
 		int shelter1 = 0, shelter2 = 0;
 
-		constexpr Direction shift_dir = color == WHITE ? NORTH : SOUTH;
-
 		int king_file = Util::getFile(Util::bitScanForward(board.pieces(color, KING)));
 		Bitboard pawns = board.pieces(color, PAWN);
 
 		if (king_file > E_FILE)
 		{
 			shelter1 = Util::popCount(pawns & KingShield[color]);
-			shelter2 = Util::popCount(pawns & Util::shift<shift_dir>(KingShield[color]));
+			shelter2 = Util::popCount(pawns & Util::shift<Util::forwardDirection<color>()>(KingShield[color]));
 		}
 		else if (king_file < D_FILE)
 		{
 			shelter1 = Util::popCount(pawns & QueenShield[color]);
-			shelter2 = Util::popCount(pawns & Util::shift<shift_dir>(QueenShield[color]));
+			shelter2 = Util::popCount(pawns & Util::shift<Util::forwardDirection<color>()>(QueenShield[color]));
 		}
 
 		score.mg += (int)(shelter1 * 5.5 + shelter2 * 2);
@@ -124,24 +122,24 @@ namespace Evaluation
 	{
 		Score score;
 
-		for (PieceType piece_type : {PAWN, KNIGHT, BISHOP, ROOK, QUEEN})
+		for (PieceType piece_type = PAWN; piece_type <= QUEEN; ++piece_type)
 		{
 			score += PieceValue[piece_type] * Util::popCount(board.pieces(color, piece_type));
 			score -= PieceValue[piece_type] * Util::popCount(board.pieces(~color, piece_type));
 		}
 
-		for (PieceType piece_type : PieceTypes)
+		for (PieceType piece_type = PAWN; piece_type < PIECE_TYPE_NB; ++piece_type)
 		{
 			for (Square square : BitboardIterator<Square>(board.pieces(color, piece_type)))
 			{
 				score += pieceSquareValue<color>(piece_type, square);
-				score += Mobility[piece_type][Util::popCount(board.attacked(square))];
+				score += Mobility[piece_type][Util::popCount(board.attacked(square) & ~board.occupied())];
 			}
 
 			for (Square square : BitboardIterator<Square>(board.pieces(~color, piece_type)))
 			{
 				score -= pieceSquareValue<~color>(piece_type, square);
-				score -= Mobility[piece_type][Util::popCount(board.attacked(square))];
+				score -= Mobility[piece_type][Util::popCount(board.attacked(square) & ~board.occupied())];
 			}
 		}
 
