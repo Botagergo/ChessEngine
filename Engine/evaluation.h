@@ -17,6 +17,9 @@ namespace Evaluation
 	extern const Score IsolatedPawn[8];
 	extern const Score HalfOpenFileBonus;
 	extern const Score OpenFileBonus;
+	extern const int KingAttacks[200];
+	extern const int KingAttacksWeight[PIECE_NB];
+
 
 	template <Color color>
 	bool isPassedPawn(Square pawn, Bitboard enemy_pawns)
@@ -122,6 +125,16 @@ namespace Evaluation
 	{
 		Score score;
 
+		Square king_square[COLOR_NB];
+		king_square[color] = Util::bitScanForward(board.pieces(color, KING));
+		king_square[~color] = Util::bitScanForward(board.pieces(~color, KING));
+
+		Bitboard king_proximity[COLOR_NB];
+		king_proximity[color] = kingAttacks(king_square[color]);
+		king_proximity[~color] = kingAttacks(king_square[~color]);
+
+		int king_attacks_count[COLOR_NB] = { 0 };
+
 		for (PieceType piece_type = PAWN; piece_type <= QUEEN; ++piece_type)
 		{
 			score += PieceValue[piece_type] * Util::popCount(board.pieces(color, piece_type));
@@ -132,12 +145,20 @@ namespace Evaluation
 		{
 			for (Square square : BitboardIterator<Square>(board.pieces(color, piece_type)))
 			{
+				int distance = DistanceTable[square][king_square[~color]];
+				Bitboard attacked = board.attacked(square);
+				king_attacks_count[~color] += KingAttacksWeight[piece_type] * Util::popCount(king_proximity[~color] & attacked) + (7 - distance);
+
 				score += pieceSquareValue<color>(piece_type, square);
 				score += Mobility[piece_type][Util::popCount(board.attacked(square) & ~board.occupied())];
 			}
 
 			for (Square square : BitboardIterator<Square>(board.pieces(~color, piece_type)))
 			{
+				int distance = DistanceTable[square][king_square[color]];
+				Bitboard attacked = board.attacked(square);
+				king_attacks_count[color] += KingAttacksWeight[piece_type] * Util::popCount(king_proximity[color] & attacked) + (7 - distance);
+
 				score -= pieceSquareValue<~color>(piece_type, square);
 				score -= Mobility[piece_type][Util::popCount(board.attacked(square) & ~board.occupied())];
 			}
@@ -146,17 +167,20 @@ namespace Evaluation
 		int our_pinned_score = 10 * Util::popCount(board.pinnedPieces<color>());
 		int their_pinned_score = 10 * Util::popCount(board.pinnedPieces<~color>());
 
-		score += evaluateKingSafety<color>(board);
-		score -= evaluateKingSafety<~color>(board);
-
 		score -= Score(our_pinned_score, our_pinned_score);
 		score += Score(their_pinned_score, their_pinned_score);
+
+		score += evaluateKingSafety<color>(board);
+		score -= evaluateKingSafety<~color>(board);
 
 		score += evaluatePawnStructure<color>(board);
 		score -= evaluatePawnStructure<~color>(board);
 
 		score += evaluateRooks<color>(board);
 		score -= evaluateRooks<~color>(board);
+
+		score -= Score(KingAttacks[king_attacks_count[color]], KingAttacks[king_attacks_count[color]] / 2);
+		score += Score(KingAttacks[king_attacks_count[~color]], KingAttacks[king_attacks_count[~color]] / 2);
 
 		if(board.toMove() == color)
 			score += TempoBonus;

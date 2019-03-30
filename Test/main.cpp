@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
 	initAttackTables();
 	initObstructedTable();
 	Zobrist::initZobristHashing();
+	initDistanceTable();
 
 	std::string line;
 	auto   running = true;
@@ -60,8 +61,8 @@ int main(int argc, char *argv[])
 		if (token == "uci")
 		{
 			std::cout << "option name Hash type spin min 2 max 4096 default 32" << std::endl;
-			std::cout << "option name Ponder type check default true" << std::endl;
-			std::cout << "option name maxdepth type string" << std::endl;
+			std::cout << "option name Ponder" << std::endl;
+			std::cout << "option name maxdepth type string default 6" << std::endl;
 			std::cout << "uciok" << std::endl;
 		}
 		else if (token == "debug")

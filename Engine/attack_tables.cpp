@@ -12,6 +12,7 @@ Bitboard KnightAttackTable[SQUARE_NB] = {};
 Bitboard KingAttackTable[SQUARE_NB] = {};
 Bitboard SlidingAttackTable[DIRECTION_NB][SQUARE_NB] = {};
 Bitboard ObstructedTable[SQUARE_NB][SQUARE_NB] = {};
+int DistanceTable[SQUARE_NB][SQUARE_NB] = {};
 
 void initAttackTables() {
 	for (int i = 0; i < SQUARE_NB; ++i)
@@ -162,6 +163,21 @@ void initObstructedTable()
 				for (int s = from + delta; s != to; s += delta)
 					ObstructedTable[from][to] |= SquareBB[s];
 			}
+		}
+	}
+}
+
+void initDistanceTable()
+{
+	for (Square square1 = A1; square1 < SQUARE_NB; ++square1)
+	{
+		for (Square square2 = A1; square2 < SQUARE_NB; ++square2)
+		{
+			int f1 = Util::getFile(square1);
+			int f2 = Util::getFile(square2);
+			int r1 = Util::getRank(square1);
+			int r2 = Util::getRank(square2);
+			DistanceTable[square1][square2] = std::max(std::abs(r1 - r2), std::abs(f1 - f2));
 		}
 	}
 }
