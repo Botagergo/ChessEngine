@@ -5,23 +5,22 @@
 
 namespace Zobrist
 {
-	unsigned long long PiecePositionHash[COLOR_NB][PIECE_TYPE_NB][SQUARE_NB] = { 0 };
-	unsigned long long BlackMovesHash = { 0 };
-	unsigned long long CastlingRightsHash[16] = { 0 };
-	unsigned long long EnPassantFileHash[FILE_NB] = { 0 };
+	u64 PiecePositionHash[COLOR_NB][PIECE_TYPE_NB][SQUARE_NB] = { 0 };
+	u64 BlackMovesHash = { 0 };
+	u64 CastlingRightsHash[16] = { 0 };
+	u64 EnPassantFileHash[FILE_NB] = { 0 };
 
 	void initZobristHashing()
 	{
 		std::random_device rd;
 		std::mt19937_64 e2(std::mt19937_64::default_seed);
 
-		std::uniform_int_distribution<unsigned long long> dist;
+		std::uniform_int_distribution<u64> dist;
 
 		for (PieceType piece_type : PieceTypes)
 		{
 			for (Square square : Squares)
 			{
-				unsigned long long d = dist(e2);
 				PiecePositionHash[WHITE][piece_type][square] = dist(e2);
 				PiecePositionHash[BLACK][piece_type][square] = dist(e2);
 			}
@@ -29,7 +28,7 @@ namespace Zobrist
 
 		BlackMovesHash = dist(e2);
 
-		unsigned long long castling_rights_hash[COLOR_NB][SIDE_NB];
+		u64 castling_rights_hash[COLOR_NB][SIDE_NB];
 		for (Color color : Colors)
 		{
 			for (Side side : Sides)
@@ -58,9 +57,9 @@ namespace Zobrist
 		}
 	}
 
-	unsigned long long getBoardHash(const Board & board)
+	u64 getBoardHash(const Board & board)
 	{
-		unsigned long long hash = 0;
+		u64 hash = 0;
 
 		if (board.toMove() == BLACK)
 			hash ^= BlackMovesHash;

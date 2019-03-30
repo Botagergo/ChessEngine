@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 
-#include "bitboard.h"
 #include "bitboard_iterator.h"
 #include "move.h"
 #include "types.h"
@@ -56,7 +55,7 @@ public:
 	int halfmoveClock() const;
 	int fullmoveNum() const;
 
-	unsigned long long hash() const;
+	u64 hash() const;
 
 	Board mirror() const;
 
@@ -86,7 +85,7 @@ private:
 	int _halfmove_clock;
 	int _fullmove_num;
 
-	unsigned long long _hash;
+	u64 _hash;
 
 	void _initOccupied();
 	void _initPieceList();
@@ -97,7 +96,7 @@ private:
 template <Color color>
 Bitboard Board::pinnedPieces() const
 {
-	assert(pieces(color, KING) != C64(0));
+	assert(pieces(color, KING) != 0Ull);
 
 	Square king = Util::bitScanForward(pieces(color, KING));
 	Bitboard pinners = ((pieces(~color, ROOK) | pieces(~color, QUEEN)) & pseudoRookAttacks(king))

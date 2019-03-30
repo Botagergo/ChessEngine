@@ -5,10 +5,10 @@
 namespace Zobrist
 {
 	void initZobristHashing();
-	unsigned long long getBoardHash(const Board & board);
+	u64 getBoardHash(const Board & board);
 
-	extern unsigned long long PiecePositionHash[COLOR_NB][PIECE_TYPE_NB][SQUARE_NB];
-	extern unsigned long long BlackMovesHash;
-	extern unsigned long long CastlingRightsHash[16];
-	extern unsigned long long EnPassantFileHash[FILE_NB];
+	extern u64 PiecePositionHash[COLOR_NB][PIECE_TYPE_NB][SQUARE_NB];
+	extern u64 BlackMovesHash;
+	extern u64 CastlingRightsHash[16];
+	extern u64 EnPassantFileHash[FILE_NB];
 }

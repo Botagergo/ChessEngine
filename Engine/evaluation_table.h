@@ -9,6 +9,9 @@ public:
 	EvaluationTable(size_t mb) { resize(mb); }
 	~EvaluationTable() { if (_entries) delete _entries; }
 
+	EvaluationTable(const EvaluationTable &other) = delete;
+	EvaluationTable& operator=(const EvaluationTable &other) = delete;
+
 	void resize(size_t mb)
 	{
 		if (_entries)
@@ -20,7 +23,7 @@ public:
 		clear();
 	}
 
-	void insert(unsigned long long hash, int score, ScoreType nodeType)
+	void insert(u64 hash, int score, ScoreType nodeType)
 	{
 		Entry *entry = _getEntry(hash);
 
@@ -31,7 +34,7 @@ public:
 		}
 	}
 
-	int probe(unsigned long long hash, int alpha, int beta)
+	int probe(u64 hash, int alpha, int beta)
 	{
 		assert(hash != 0);
 
@@ -67,18 +70,18 @@ public:
 private:
 	struct Entry
 	{
-		Entry(unsigned long long hash, int score, ScoreType nodeType) :
+		Entry(u64 hash, int score, ScoreType nodeType) :
 			hash(hash), score(score), nodeType(nodeType), valid(true) {}
 
 		Entry() : valid(false) {}
 
-		unsigned long long hash;
+		u64 hash;
 		int score;
 		ScoreType nodeType;
 		bool valid;
 	};
 
-	Entry * _getEntry(unsigned long long hash)
+	Entry * _getEntry(u64 hash)
 	{
 		return &_entries[hash % _size];
 	}

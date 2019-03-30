@@ -1,5 +1,4 @@
 #include "attacks.h"
-#include "bitboard.h"
 #include "board.h"
 #include "bitboard_iterator.h"
 #include "perft.h"

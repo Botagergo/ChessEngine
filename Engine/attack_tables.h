@@ -1,6 +1,5 @@
 #pragma once
 
-#include "bitboard.h"
 #include "constants.h"
 #include "types.h"
 

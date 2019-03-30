@@ -10,8 +10,8 @@ namespace Search
 	bool ponder = false;
 	bool passed_maxdepth = false;
 
-	TranspositionTable transposition_table = TranspositionTable(DEFAULT_HASH_TABLE_SIZE);
-	EvaluationTable evaluation_table = EvaluationTable(DEFAULT_HASH_TABLE_SIZE);
+	TranspositionTable transposition_table(DEFAULT_HASH_TABLE_SIZE);
+	EvaluationTable evaluation_table(DEFAULT_HASH_TABLE_SIZE);
 
 	std::thread search_thrd = {};
 
@@ -34,11 +34,11 @@ namespace Search
 
 	void updateNodesPerSec()
 	{
-		unsigned long long curr_node_count = Stats.alpha_beta_nodes + Stats.quiescence_nodes;
+		u64 curr_node_count = Stats.alpha_beta_nodes + Stats.quiescence_nodes;
 		double node_diff = (double)(curr_node_count - SearchInfo.last_node_count);
 
 		std::chrono::steady_clock::time_point curr_time = std::chrono::steady_clock::now();
-		unsigned long long time_diff = std::chrono::duration_cast<std::chrono::microseconds>(curr_time - SearchInfo.last_time).count();
+		u64 time_diff = std::chrono::duration_cast<std::chrono::microseconds>(curr_time - SearchInfo.last_time).count();
 
 		std::cout << "info nodes " << curr_node_count
 			<< " nps " << (int)(node_diff * (1000000.0 / time_diff)) << std::endl;
@@ -114,7 +114,7 @@ namespace Search
 			sendStats();
 	}
 
-	bool isRepetition(unsigned long long hash, int ply)
+	bool isRepetition(u64 hash, int ply)
 	{
 		for (int i = 0; i < ply; i += 2)
 		{

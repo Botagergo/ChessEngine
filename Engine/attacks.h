@@ -2,7 +2,6 @@
 
 #include <cassert>
 
-#include "bitboard.h"
 #include "attack_tables.h"
 #include "types.h"
 #include "util.h"

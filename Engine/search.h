@@ -27,24 +27,24 @@ namespace Search
 
 	static std::pair<Move, Move> killer_moves[MAX_DEPTH];
 
-	static std::array<unsigned long long, MAX_DEPTH> history;
+	static std::array<u64, MAX_DEPTH> history;
 
 	static struct {
-		unsigned long long alpha_beta_nodes;
-		unsigned long long quiescence_nodes;
-		unsigned long long alpha_beta_cutoffs;
-		unsigned long long quiescence_cutoffs;
-		unsigned long long _move_gen_count;
-		unsigned long long hash_move_cutoffs;
-		unsigned long long killer_move_cutoffs;
-		unsigned long long hash_score_returned;
-		unsigned long long pv_search_research_count;
+		u64 alpha_beta_nodes;
+		u64 quiescence_nodes;
+		u64 alpha_beta_cutoffs;
+		u64 quiescence_cutoffs;
+		u64 _move_gen_count;
+		u64 hash_move_cutoffs;
+		u64 killer_move_cutoffs;
+		u64 hash_score_returned;
+		u64 pv_search_research_count;
 		float avg_searched_moves;
 	} Stats;
 
 	static struct
 	{
-		unsigned long long last_node_count;
+		u64 last_node_count;
 		std::chrono::steady_clock::time_point last_time;
 	} SearchInfo;
 
@@ -59,7 +59,7 @@ namespace Search
 	void startSearch(const Board & board, int maxdepth);
 	void search(const Board & board, int maxdepth);
 
-	bool isRepetition(unsigned long long hash, int ply);
+	bool isRepetition(u64 hash, int ply);
 
 	template <Color toMove, bool pvNode, bool nullMoveAllowed>
 	int alphaBeta(const Board & board, int alpha, int beta, int depthleft, int ply, std::vector<Move> * pv)
@@ -132,7 +132,7 @@ namespace Search
 			}
 
 			if (ply == 0)
-				sendCurrentMove(mg.curr(), i);
+				sendCurrentMove(mg.curr(), searched_moves + 1);
 
 #ifdef PV_SEARCH
 			if (searched_moves < 1)

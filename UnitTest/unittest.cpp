@@ -2,7 +2,6 @@
 #include "CppUnitTest.h"
 
 #include "attacks.h"
-#include "bitboard.h"
 #include "bitboard_iterator.h"
 #include "board.h"
 #include "evaluation.h"
@@ -27,24 +26,24 @@ namespace UnitTests
 	public:
 		TEST_METHOD(shift_Test)
 		{
-			Bitboard bb = C64(0x920000091002002);
+			Bitboard bb = 0x920000091002002Ull;
 
-			Assert::AreEqual(Util::shift<NORTH>(0), C64(0));
+			Assert::AreEqual(Util::shift<NORTH>(0), 0Ull);
 
-			Assert::AreEqual(Util::shift<NORTH>(bb), C64(0x2000009100200200));
-			Assert::AreEqual(Util::shift<NORTHEAST>(bb), C64(0x4000002200400400));
-			Assert::AreEqual(Util::shift<EAST>(bb), C64(0x1240000022004004));
-			Assert::AreEqual(Util::shift<SOUTHEAST>(bb), C64(0x12400000220040));
-			Assert::AreEqual(Util::shift<SOUTH>(bb), C64(0x9200000910020));
-			Assert::AreEqual(Util::shift<SOUTHWEST>(bb), C64(0x4100000480010));
-			Assert::AreEqual(Util::shift<WEST>(bb), C64(0x410000048001001));
-			Assert::AreEqual(Util::shift<NORTHWEST>(bb), C64(0x1000004800100100));
+			Assert::AreEqual(Util::shift<NORTH>(bb), 0x2000009100200200Ull);
+			Assert::AreEqual(Util::shift<NORTHEAST>(bb), 0x4000002200400400Ull);
+			Assert::AreEqual(Util::shift<EAST>(bb), 0x1240000022004004Ull);
+			Assert::AreEqual(Util::shift<SOUTHEAST>(bb), 0x12400000220040Ull);
+			Assert::AreEqual(Util::shift<SOUTH>(bb), 0x9200000910020Ull);
+			Assert::AreEqual(Util::shift<SOUTHWEST>(bb), 0x4100000480010Ull);
+			Assert::AreEqual(Util::shift<WEST>(bb), 0x410000048001001Ull);
+			Assert::AreEqual(Util::shift<NORTHWEST>(bb), 0x1000004800100100Ull);
 		}
 
 		TEST_METHOD(flipTest)
 		{
-			Assert::AreEqual(Util::verticalFlip(C64(0)), C64(0));
-			Assert::AreEqual(Util::verticalFlip(C64(0x1000200020020004)), C64(0x400022000200010));
+			Assert::AreEqual(Util::verticalFlip(0Ull), 0Ull);
+			Assert::AreEqual(Util::verticalFlip(0x1000200020020004Ull), 0x400022000200010Ull);
 		}
 
 		TEST_METHOD(piece_Test)
@@ -91,14 +90,14 @@ namespace UnitTests
 
 		TEST_METHOD(pawnPushTargets_Test)
 		{
-			Assert::AreEqual(pawnPushTargets<WHITE>(C64(0x1000000000082100), FullBB), C64(0x29210000));
-			Assert::AreEqual(pawnPushTargets<WHITE>(C64(0x2800002100), FullBB ^ C64(0x480001200000)), C64(0x200000010000));
+			Assert::AreEqual(pawnPushTargets<WHITE>(0x1000000000082100Ull, FullBB), 0x29210000Ull);
+			Assert::AreEqual(pawnPushTargets<WHITE>(0x2800002100Ull, FullBB ^ 0x480001200000Ull), 0x200000010000Ull);
 		}
 
 		TEST_METHOD(pawnAttacks_Test)
 		{
-			Bitboard pawns = C64(0x881000000040000);
-			Bitboard attacks = C64(0x420000000a000000);
+			Bitboard pawns = 0x881000000040000Ull;
+			Bitboard attacks = 0x420000000a000000Ull;
 
 			Assert::AreEqual(pawnAttacks<WHITE>(pawns), attacks);
 			Assert::AreEqual(pawnAttacks<BLACK>(Util::verticalFlip(pawns)), Util::verticalFlip(attacks));
@@ -109,21 +108,21 @@ namespace UnitTests
 			initSquareBB();
 			initAttackTables();
 
-			Assert::AreEqual(knightAttacks(E4), C64(0x284400442800));
-			Assert::AreEqual(knightAttacks(B4), C64(0x50800080500));
-			Assert::AreEqual(knightAttacks(D7), C64(0x2200221400000000));
-			Assert::AreEqual(knightAttacks(G5), C64(0xa0100010a00000));
-			Assert::AreEqual(knightAttacks(E2), C64(0x28440044));
-			Assert::AreEqual(knightAttacks(A5), C64(0x2040004020000));
-			Assert::AreEqual(knightAttacks(D8), C64(0x22140000000000));
-			Assert::AreEqual(knightAttacks(H5), C64(0x40200020400000));
-			Assert::AreEqual(knightAttacks(E1), C64(0x284400));
-			Assert::AreEqual(knightAttacks(B2), C64(0x5080008));
-			Assert::AreEqual(knightAttacks(A2), C64(0x2040004));
-			Assert::AreEqual(knightAttacks(A1), C64(0x20400));
-			Assert::AreEqual(knightAttacks(A8), C64(0x4020000000000));
-			Assert::AreEqual(knightAttacks(H8), C64(0x20400000000000));
-			Assert::AreEqual(knightAttacks(H1), C64(0x402000));
+			Assert::AreEqual(knightAttacks(E4), 0x284400442800Ull);
+			Assert::AreEqual(knightAttacks(B4), 0x50800080500Ull);
+			Assert::AreEqual(knightAttacks(D7), 0x2200221400000000Ull);
+			Assert::AreEqual(knightAttacks(G5), 0xa0100010a00000Ull);
+			Assert::AreEqual(knightAttacks(E2), 0x28440044Ull);
+			Assert::AreEqual(knightAttacks(A5), 0x2040004020000Ull);
+			Assert::AreEqual(knightAttacks(D8), 0x22140000000000Ull);
+			Assert::AreEqual(knightAttacks(H5), 0x40200020400000Ull);
+			Assert::AreEqual(knightAttacks(E1), 0x284400Ull);
+			Assert::AreEqual(knightAttacks(B2), 0x5080008Ull);
+			Assert::AreEqual(knightAttacks(A2), 0x2040004Ull);
+			Assert::AreEqual(knightAttacks(A1), 0x20400Ull);
+			Assert::AreEqual(knightAttacks(A8), 0x4020000000000Ull);
+			Assert::AreEqual(knightAttacks(H8), 0x20400000000000Ull);
+			Assert::AreEqual(knightAttacks(H1), 0x402000Ull);
 		}
 
 		TEST_METHOD(bishopAttacks_Test)
@@ -131,12 +130,12 @@ namespace UnitTests
 			initSquareBB();
 			initAttackTables();
 
-			Assert::AreEqual(bishopAttacks(A8, EmptyBB), C64(0x2040810204080));
-			Assert::AreEqual(bishopAttacks(E6, EmptyBB), C64(0x4428002844820100));
-			Assert::AreEqual(bishopAttacks(D1, EmptyBB), C64(0x8041221400));
-			Assert::AreEqual(bishopAttacks(E4, C64(0x80000800280000)), C64(0x80402800280000));
-			Assert::AreEqual(bishopAttacks(A1, C64(0x40200)), C64(0x200));
-			Assert::AreEqual(bishopAttacks(D4, C64(0x21000140000)), C64(0x21400140000));
+			Assert::AreEqual(bishopAttacks(A8, EmptyBB), 0x2040810204080Ull);
+			Assert::AreEqual(bishopAttacks(E6, EmptyBB), 0x4428002844820100Ull);
+			Assert::AreEqual(bishopAttacks(D1, EmptyBB), 0x8041221400Ull);
+			Assert::AreEqual(bishopAttacks(E4, 0x80000800280000Ull), 0x80402800280000Ull);
+			Assert::AreEqual(bishopAttacks(A1, 0x40200Ull), 0x200Ull);
+			Assert::AreEqual(bishopAttacks(D4, 0x21000140000Ull), 0x21400140000Ull);
 		}
 
 		TEST_METHOD(rookAttacks_Test)
@@ -144,11 +143,11 @@ namespace UnitTests
 			initSquareBB();
 			initAttackTables();
 
-			Assert::AreEqual(rookAttacks(D3, EmptyBB), C64(0x808080808f70808));
-			Assert::AreEqual(rookAttacks(A1, EmptyBB), C64(0x1010101010101fe));
-			Assert::AreEqual(rookAttacks(A1, C64(0x104)), C64(0x106));
-			Assert::AreEqual(rookAttacks(D3, C64(0x808000000120000)), C64(0x8080808160808));
-			Assert::AreEqual(rookAttacks(H5, C64(0x802080000000)), C64(0x806080000000));
+			Assert::AreEqual(rookAttacks(D3, EmptyBB), 0x808080808f70808Ull);
+			Assert::AreEqual(rookAttacks(A1, EmptyBB), 0x1010101010101feUll);
+			Assert::AreEqual(rookAttacks(A1, 0x104Ull), 0x106Ull);
+			Assert::AreEqual(rookAttacks(D3, 0x808000000120000Ull), 0x8080808160808Ull);
+			Assert::AreEqual(rookAttacks(H5, 0x802080000000Ull), 0x806080000000Ull);
 		}
 
 		TEST_METHOD(queenAttacks_Test)
@@ -159,22 +158,22 @@ namespace UnitTests
 
 		TEST_METHOD(bitboardIterator_Test)
 		{
-			BitboardIterator<Square> squares(C64(0));
+			BitboardIterator<Square> squares(0Ull);
 			auto b1 = squares.begin();
 			Assert::IsTrue(squares.end() == b1);
 
-			squares = BitboardIterator<Square>(C64(0x21000008000004c0));
+			squares = BitboardIterator<Square>(0x21000008000004c0Ull);
 
 			auto expected1 = { G1, H1, C2, D5, A8, F8 };
 			Assert::IsTrue(std::equal(squares.begin(), squares.end(), expected1.begin()));
 
-			BitboardIterator<Bitboard> bitboards(C64(0));
+			BitboardIterator<Bitboard> bitboards(0Ull);
 			auto b2 = bitboards.begin();
 			Assert::IsTrue(bitboards.end() == b2);
 
-			bitboards = BitboardIterator<Bitboard>(C64(0x21000008000004c0));
+			bitboards = BitboardIterator<Bitboard>(0x21000008000004c0Ull);
 
-			auto expected2 = { C64(0x40), C64(0x80), C64(0x400), C64(0x800000000), C64(0x100000000000000), C64(0x2000000000000000) };
+			auto expected2 = { 0x40Ull, 0x80Ull, 0x400Ull, 0x800000000Ull, 0x100000000000000Ull, 0x2000000000000000Ull };
 			Assert::IsTrue(std::equal(bitboards.begin(), bitboards.end(), expected2.begin()));
 		}
 
@@ -218,25 +217,25 @@ namespace UnitTests
 
 			Assert::AreEqual(b.toMove(), BLACK);
 
-			Assert::AreEqual(b.pieces(WHITE, PAWN), C64(0x2010c000));
-			Assert::AreEqual(b.pieces(WHITE, KNIGHT), C64(0x40));
-			Assert::AreEqual(b.pieces(WHITE, BISHOP), C64(0x0));
-			Assert::AreEqual(b.pieces(WHITE, ROOK), C64(0x81));
-			Assert::AreEqual(b.pieces(WHITE, QUEEN), C64(0x8));
-			Assert::AreEqual(b.pieces(WHITE, KING), C64(0x10));
+			Assert::AreEqual(b.pieces(WHITE, PAWN), 0x2010c000Ull);
+			Assert::AreEqual(b.pieces(WHITE, KNIGHT), 0x40Ull);
+			Assert::AreEqual(b.pieces(WHITE, BISHOP), 0x0Ull);
+			Assert::AreEqual(b.pieces(WHITE, ROOK), 0x81Ull);
+			Assert::AreEqual(b.pieces(WHITE, QUEEN), 0x8Ull);
+			Assert::AreEqual(b.pieces(WHITE, KING), 0x10Ull);
 
-			Assert::AreEqual(b.pieces(BLACK, PAWN), C64(0x4100010000000));
-			Assert::AreEqual(b.pieces(BLACK, KNIGHT), C64(0x20000000000));
-			Assert::AreEqual(b.pieces(BLACK, BISHOP), C64(0x0));
-			Assert::AreEqual(b.pieces(BLACK, ROOK), C64(0x0));
-			Assert::AreEqual(b.pieces(BLACK, QUEEN), C64(0x0));
-			Assert::AreEqual(b.pieces(BLACK, KING), C64(0x2000000000000000));
+			Assert::AreEqual(b.pieces(BLACK, PAWN), 0x4100010000000Ull);
+			Assert::AreEqual(b.pieces(BLACK, KNIGHT), 0x20000000000Ull);
+			Assert::AreEqual(b.pieces(BLACK, BISHOP), 0x0Ull);
+			Assert::AreEqual(b.pieces(BLACK, ROOK), 0x0Ull);
+			Assert::AreEqual(b.pieces(BLACK, QUEEN), 0x0Ull);
+			Assert::AreEqual(b.pieces(BLACK, KING), 0x2000000000000000Ull);
 
 			Assert::AreEqual(b.enPassantTarget(), F3);
 			Assert::AreEqual(b.enPassantCaptureTarget(), F4);
 
-			Assert::AreEqual(b.occupied(WHITE), C64(0x2010c0d9));
-			Assert::AreEqual(b.occupied(BLACK), C64(0x2004120010000000));
+			Assert::AreEqual(b.occupied(WHITE), 0x2010c0d9Ull);
+			Assert::AreEqual(b.occupied(BLACK), 0x2004120010000000Ull);
 
 			Board::fromFen("5k2/2p5/1n2p3/8/4pP2/4P3/6PP/R2QK1NR b - - 0 111 ");
 			Board::fromFen("5k2/2p5/1n2p3/8/4pP2/4P3/6PP/R2QK1NR b - - 4444 111 ");

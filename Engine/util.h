@@ -5,7 +5,6 @@
 #include <assert.h>
 #include <cstdlib>
 
-#include "bitboard.h"
 #include "constants.h"
 #include "types.h"
 

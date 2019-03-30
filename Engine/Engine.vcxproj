@@ -120,14 +120,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="attacks.h" />
-    <ClInclude Include="bitboard.h" />
     <ClInclude Include="board.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="constants.h" />
     <ClInclude Include="attack_tables.h" />
     <ClInclude Include="bitboard_iterator.h" />
     <ClInclude Include="evaluation_table.h" />
-    <ClInclude Include="legal_move_gen.h" />
     <ClInclude Include="move.h" />
     <ClInclude Include="movegen.h" />
     <ClInclude Include="perft.h" />

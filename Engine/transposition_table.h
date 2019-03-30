@@ -9,13 +9,16 @@ public:
 	TranspositionTable(size_t mb) { resize(mb); }
 	~TranspositionTable() { if (_entries) delete _entries; }
 
+	TranspositionTable(const TranspositionTable &other) = delete;
+	TranspositionTable& operator=(const TranspositionTable &other) = delete;
+
 	struct Stat
 	{
-		unsigned long long pv_node_hits = 0;
-		unsigned long long cut_node_hits = 0;
-		unsigned long long all_node_hits = 0;
-		unsigned long long unknown_hits = 0;
-		unsigned long long failed_inserts = 0;
+		u64 pv_node_hits = 0;
+		u64 cut_node_hits = 0;
+		u64 all_node_hits = 0;
+		u64 unknown_hits = 0;
+		u64 failed_inserts = 0;
 	};
 
 	mutable Stat _stats;
@@ -31,7 +34,7 @@ public:
 		clear();
 	}
 
-	void insert(unsigned long long hash, int depth, int score, Move move, ScoreType nodeType)
+	void insert(u64 hash, int depth, int score, Move move, ScoreType nodeType)
 	{
 		Entry *entry = _getEntry(hash);
 
@@ -42,14 +45,13 @@ public:
 		}
 		else if (entry->depth < depth)
 			*entry = Entry(hash, depth, score, move, nodeType);
-		else if (entry->hash != hash)
-			++_stats.failed_inserts;
+		//else if (entry->hash != hash)
+		//	++_stats.failed_inserts;
 	}
 
-	std::pair<int, Move> probe(unsigned long long hash, int depth, int alpha, int beta)
+	std::pair<int, Move> probe(u64 hash, int depth, int alpha, int beta)
 	{
 		assert(hash != 0);
-		assert(_entries != nullptr);
 
 		std::pair<int, Move> pair = std::make_pair(SCORE_INVALID, Move());
 		Entry *entry = _getEntry(hash);
@@ -101,12 +103,12 @@ public:
 private:
 	struct Entry
 	{
-		Entry(unsigned long long hash, int depth, int score, Move move, ScoreType nodeType) :
+		Entry(u64 hash, int depth, int score, Move move, ScoreType nodeType) :
 			hash(hash), depth(depth), score(score), move(move), nodeType(nodeType), valid(true) {}
 
 		Entry() : valid(false) {}
 
-		unsigned long long hash;
+		u64 hash;
 		int depth;
 		int score;
 		Move move;
@@ -114,7 +116,7 @@ private:
 		bool valid;
 	};
 
-	Entry * _getEntry(unsigned long long hash)
+	Entry * _getEntry(u64 hash)
 	{
 		return &_entries[hash % _size];
 	}

@@ -129,8 +129,8 @@ namespace MoveGen
 
 		const static Bitboard CantBeOccupied = CantBeAttacked |
 			(toMove == WHITE
-				? (side == QUEENSIDE ? SquareBB[B1] : C64(0))
-				: (side == QUEENSIDE ? SquareBB[B8] : C64(0)));
+				? (side == QUEENSIDE ? SquareBB[B1] : 0Ull)
+				: (side == QUEENSIDE ? SquareBB[B8] : 0Ull));
 
 		if (board.canCastle(toMove, side)
 			&& !board.isInCheck(toMove)

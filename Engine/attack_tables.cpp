@@ -18,7 +18,7 @@ void initAttackTables() {
 	for (int i = 0; i < SQUARE_NB; ++i)
 	{
 		Bitboard knight = SquareBB[i];
-		Bitboard attacks = C64(0);
+		Bitboard attacks = 0Ull;
 
 		attacks |= knight << 15 & NotHFileBB;
 		attacks |= knight << 6 & NotGHFileBB;
@@ -57,7 +57,7 @@ void initAttackTables() {
 	//------------------------
 	//northwest ray
 	//------------------------
-	ray = C64(0x0102040810204000);
+	ray = 0x0102040810204000Ull;
 
 	for (int file = 7; file >= 0; --file, ray = Util::shift<WEST>(ray))
 	{
@@ -85,7 +85,7 @@ void initAttackTables() {
 	//------------------------
 	//southwest ray
 	//------------------------
-	ray = C64(0x40201008040201);
+	ray = 0x40201008040201Ull;
 
 	for (int file = 7; file >= 0; --file, ray = Util::shift<WEST>(ray))
 	{
@@ -107,7 +107,7 @@ void initAttackTables() {
 	//------------------------
 	//southeast ray
 	//------------------------
-	ray = C64(0x2040810204080);
+	ray = 0x2040810204080Ull;
 
 	for (int file = 0; file < 8; ++file, ray = Util::shift<EAST>(ray))
 	{
@@ -135,7 +135,7 @@ void initAttackTables() {
 	//------------------------
 	//northeast ray
 	//------------------------
-	ray = C64(0x8040201008040200);
+	ray = 0x8040201008040200Ull;
 
 	for (int file = 0; file < 8; ++file, ray = Util::shift<EAST>(ray))
 	{

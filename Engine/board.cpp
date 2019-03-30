@@ -331,7 +331,7 @@ int Board::fullmoveNum() const
 {
 	return _fullmove_num;
 }
-unsigned long long Board::hash() const
+u64 Board::hash() const
 {
 	return _hash;
 }

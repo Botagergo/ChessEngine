@@ -2,6 +2,9 @@
 
 #include <string>
 
+typedef unsigned long long Bitboard;
+typedef unsigned long long u64;
+
 enum Direction
 {
 	NORTH, NORTHWEST, WEST, SOUTHWEST, SOUTH, SOUTHEAST,EAST, NORTHEAST,

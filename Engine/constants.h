@@ -2,33 +2,32 @@
 
 #include <limits>
 
-#include "bitboard.h"
 #include "types.h"
 
 namespace Constants
 {
 	const Bitboard FileBB[] =
 	{
-		C64(0x0101010101010101),
-		C64(0x0202020202020202),
-		C64(0x0404040404040404),
-		C64(0x0808080808080808),
-		C64(0x1010101010101010),
-		C64(0x2020202020202020),
-		C64(0x4040404040404040),
-		C64(0x8080808080808080),
+		0x0101010101010101ULL,
+		0x0202020202020202ULL,
+		0x0404040404040404ULL,
+		0x0808080808080808ULL,
+		0x1010101010101010ULL,
+		0x2020202020202020ULL,
+		0x4040404040404040ULL,
+		0x8080808080808080ULL,
 	};
 
 	const Bitboard RankBB[] =
 	{
-		C64(0x00000000000000FF),
-		C64(0x000000000000FF00),
-		C64(0x0000000000FF0000),
-		C64(0x00000000FF000000),
-		C64(0x000000FF00000000),
-		C64(0x0000FF0000000000),
-		C64(0x00FF000000000000),
-		C64(0xFF00000000000000),
+		0x00000000000000FFUll,
+		0x000000000000FF00Ull,
+		0x0000000000FF0000Ull,
+		0x00000000FF000000Ull,
+		0x000000FF00000000Ull,
+		0x0000FF0000000000Ull,
+		0x00FF000000000000Ull,
+		0xFF00000000000000Ull,
 	};
 
 	extern Bitboard SquareBB[SQUARE_NB];
@@ -44,8 +43,8 @@ namespace Constants
 		"a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8"
 	};
 
-	const Bitboard EmptyBB = C64(0);
-	const Bitboard FullBB = std::numeric_limits<unsigned long long>::max();
+	const Bitboard EmptyBB = 0ULL;
+	const Bitboard FullBB = std::numeric_limits<u64>::max();
 
 	const Bitboard NotAFileBB = ~FileBB[A_FILE];
 	const Bitboard NotHFileBB = ~FileBB[H_FILE];
