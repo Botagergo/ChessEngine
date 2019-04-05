@@ -194,8 +194,7 @@ namespace MoveGen
 
 		bool end()
 		{
-			return !_curr_hash_move && _pos >= _move_count/*
-				|| quiescence && _scores[_pos] < 0)*/;
+			return !_curr_hash_move && _pos >= _move_count;
 		}
 
 	private:

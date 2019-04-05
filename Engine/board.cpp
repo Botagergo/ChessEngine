@@ -336,9 +336,43 @@ u64 Board::hash() const
 	return _hash;
 }
 
-Board Board::mirror() const
+Board Board::flip() const
 {
-	Board board;
+	Board board(*this);
+
+	for (PieceType piece_type = PAWN; piece_type < PIECE_TYPE_NB; ++piece_type)
+	{
+		std::swap(board._pieces[WHITE][piece_type], board._pieces[BLACK][piece_type]);
+		std::swap(board._material[WHITE][piece_type], board._material[BLACK][piece_type]);
+		board._pieces[WHITE][piece_type] = Util::verticalFlip(board._pieces[WHITE][piece_type]);
+		board._pieces[BLACK][piece_type] = Util::verticalFlip(board._pieces[BLACK][piece_type]);
+
+	}
+
+	std::swap(board._occupied[WHITE], board._occupied[BLACK]);
+	board._occupied[WHITE] = Util::verticalFlip(board._occupied[WHITE]);
+	board._occupied[BLACK] = Util::verticalFlip(board._occupied[BLACK]);
+
+	if (_en_passant_target != NO_SQUARE)
+	{
+		board._en_passant_target = Util::bitScanForward(Util::verticalFlip(Constants::SquareBB[_en_passant_target]));
+		board._en_passant_capture_target = Util::bitScanForward(Util::verticalFlip(Constants::SquareBB[_en_passant_capture_target]));
+	}
+
+	unsigned char new_cr = 0;
+	for (Color color : Colors)
+		for (Side side : Sides)
+			if (board.canCastle(color, side))
+				new_cr |= CastleFlag[~color][side];
+	board._castling_rights = new_cr;
+
+	board._to_move = ~board._to_move;
+
+	board._initPieceList();
+	board._updateAttacked();
+
+	board._hash = Zobrist::getBoardHash(board);
+
 	return board;
 }
 

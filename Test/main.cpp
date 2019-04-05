@@ -17,9 +17,9 @@ void perftReceived(Board board, int depth, std::vector<Move> moves, bool per_mov
 void printPerftRes(const Perft::PerftResult &res);
 
 Board board;
-int maxdepth = 7;
+int maxdepth = 9;
 
-enum command
+enum Command
 {
 	search_moves,
 	ponder,
@@ -130,39 +130,39 @@ int main(int argc, char *argv[])
 		}
 		else if (token == "go")
 		{
-			std::map<command, CommandParam> commands;
-			commands[command::depth].number = maxdepth;
+			std::map<Command, CommandParam> commands;
+			commands[Command::depth].number = maxdepth;
 
 			Search::ponder = false;
 
 			while (iss >> token)
 				if (token == "searchmoves")
 					while (iss >> token)
-						commands[command::search_moves].str += std::string(" ", commands[command::search_moves].str.empty() ? 0 : 1) + token;
+						commands[Command::search_moves].str += std::string(" ", commands[Command::search_moves].str.empty() ? 0 : 1) + token;
 				else if (token == "ponder")
 					Search::ponder = true;
 				else if (token == "wtime")
-					iss >> commands[command::white_time].number;
+					iss >> commands[Command::white_time].number;
 				else if (token == "btime")
-					iss >> commands[command::black_time].number;
+					iss >> commands[Command::black_time].number;
 				else if (token == "winc")
-					iss >> commands[command::white_increment].number;
+					iss >> commands[Command::white_increment].number;
 				else if (token == "binc")
-					iss >> commands[command::black_increment].number;
+					iss >> commands[Command::black_increment].number;
 				else if (token == "movestogo")
-					iss >> commands[command::moves_to_go].number;
+					iss >> commands[Command::moves_to_go].number;
 				else if (token == "depth")
-					iss >> commands[command::depth].number;
+					iss >> commands[Command::depth].number;
 				else if (token == "nodes")
-					iss >> commands[command::nodes].number;
+					iss >> commands[Command::nodes].number;
 				else if (token == "mate")
-					iss >> commands[command::mate].number;
+					iss >> commands[Command::mate].number;
 				else if (token == "move_time")
-					iss >> commands[command::move_time].number;
+					iss >> commands[Command::move_time].number;
 				else if (token == "infinite")
-					commands[command::infinite];
+					commands[Command::infinite];
 
-			Search::startSearch(board, commands[command::depth].number);
+			Search::startSearch(board, commands[Command::depth].number);
 		}
 		else if (token == "stop")
 		{

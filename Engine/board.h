@@ -57,7 +57,7 @@ public:
 
 	u64 hash() const;
 
-	Board mirror() const;
+	Board flip() const;
 
 	const static int AllCastlingRights;
 	const static int CastleFlag[COLOR_NB][SIDE_NB];
@@ -76,7 +76,6 @@ private:
 	std::array<Bitboard, COLOR_NB> _occupied;
 	std::array<Bitboard, SQUARE_NB> _attackedByPiece;
 	std::array<Bitboard, COLOR_NB> _attackedByColor;
-	std::array<Bitboard, COLOR_NB> _pinnedPieces;
 	int _material[COLOR_NB][PIECE_TYPE_NB];
 	
 	Square _en_passant_target;

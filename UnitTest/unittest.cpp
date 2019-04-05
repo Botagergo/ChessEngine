@@ -5,6 +5,7 @@
 #include "bitboard_iterator.h"
 #include "board.h"
 #include "evaluation.h"
+#include "search.h"
 #include "see.h"
 #include "util.h"
 #include "zobrist.h"
@@ -40,7 +41,7 @@ namespace UnitTests
 			Assert::AreEqual(Util::shift<NORTHWEST>(bb), 0x1000004800100100Ull);
 		}
 
-		TEST_METHOD(flipTest)
+		TEST_METHOD(flip_Test)
 		{
 			Assert::AreEqual(Util::verticalFlip(0Ull), 0Ull);
 			Assert::AreEqual(Util::verticalFlip(0x1000200020020004Ull), 0x400022000200010Ull);
@@ -321,6 +322,9 @@ namespace UnitTests
 
 			board = Board::fromFen("r2qkb1r/p1pbpppp/1pnp1n2/1B6/Q2P4/2P1P3/PP3PPP/RNB1K1NR w KQkq - 0 6 ");
 			Assert::AreEqual(PieceValue[KNIGHT].mg, see<WHITE>(board, Move::parse(board, "b5c6")));
+
+			board = Board::fromFen("r2qkb1r/p1pbpppp/1pnp1n2/8/Q2P4/2P1P3/PP3PPP/RNB1K1NR w KQkq - 0 6 ");
+			Assert::AreEqual(PieceValue[KNIGHT].mg - PieceValue[QUEEN].mg, see<WHITE>(board, Move::parse(board, "a4c6")));
 		}
 
 		TEST_METHOD(isPassedPawn_Test)
@@ -357,6 +361,80 @@ namespace UnitTests
 
 			board = Board::fromFen("8/3k4/3q4/8/8/3Q4/3R4/4K3 b - - 0 1 ");
 			Assert::IsTrue(board.pinnedPieces<BLACK>() & board.pieces(BLACK, QUEEN));
+		}
+
+		TEST_METHOD(flipBoard_Test)
+		{
+			initSquareBB();
+			initAttackTables();
+			initObstructedTable();
+			Zobrist::initZobristHashing();
+
+			Board board = Board::fromFen("r2qk1nr/1pp1bp2/p1n5/3pPbp1/7p/1NP1PN1P/PP3PPB/R2QKB1R w Kkq - 1 1");
+			Board flipped_board = board.flip();
+			Assert::AreEqual(std::string("r2qkb1r/pp3ppb/1np1pn1p/7P/3PpBP1/P1N5/1PP1BP2/R2QK1NR b KQk - 1 1"), flipped_board.fen());
+
+			board = Board::fromFen("r2qkb1r/pp3ppb/1n2pn1p/7P/1PpPpBP1/P1N5/2P1BP2/R2QK1NR b - b3 1 1");
+			flipped_board = board.flip();
+			Assert::AreEqual(std::string("r2qk1nr/2p1bp2/p1n5/1pPpPbp1/7p/1N2PN1P/PP3PPB/R2QKB1R w - b6 1 1"), flipped_board.fen());
+		}
+
+		TEST_METHOD(evaluationSymmetry_Test)
+		{
+			initSquareBB();
+			initAttackTables();
+			initObstructedTable();
+			Zobrist::initZobristHashing();
+
+			std::vector<std::string> fens = {
+				"r2qk1nr/1pp1bp2/p1n5/3pPbp1/7p/1NP1PN1P/PP3PPB/R2QKB1R w Kkq - 1 1",
+				"r2k1b1r/pp2p1pp/4Qn2/1B1p4/4q3/4B3/PP3PPP/R4RK1 w - - 0 1",
+			};
+
+			for (const std::string &fen : fens)
+			{
+				Board board = Board::fromFen(fen);
+				int eval1 = Evaluation::evaluate<WHITE>(board);
+				int eval2 = Evaluation::evaluate<BLACK>(board.flip());
+				Assert::AreEqual(eval1, eval2);
+
+				eval1 = Evaluation::evaluate<BLACK>(board);
+				eval2 = Evaluation::evaluate<WHITE>(board.flip());
+				Assert::AreEqual(eval1, eval2);
+			}
+		}
+
+		TEST_METHOD(searchSymmetry_Test)
+		{
+			initSquareBB();
+			initAttackTables();
+			initObstructedTable();
+			Zobrist::initZobristHashing();
+
+			const static int MAXDEPTH = 4;
+			std::vector<std::string> fens = {
+				"r2qk1nr/1pp1bp2/p1n5/3pPbp1/7p/1NP1PN1P/PP3PPB/R2QKB1R w Kkq - 1 1",
+				"r2k1b1r/pp2p1pp/4Qn2/1B1p4/4q3/4B3/PP3PPP/R4RK1 w - - 0 1",
+			};
+
+			for (const std::string &fen : fens)
+			{
+				Board board = Board::fromFen(fen);
+				int score1, score2;
+
+				if (board.toMove() == WHITE)
+				{
+					score1 = Search::alphaBeta<WHITE, true, false>(board, -SCORE_INFINITY, SCORE_INFINITY, MAXDEPTH, 0, nullptr);
+					score2 = Search::alphaBeta<BLACK, true, false>(board.flip(), -SCORE_INFINITY, SCORE_INFINITY, MAXDEPTH, 0, nullptr);
+				}
+				else
+				{
+					score1 = Search::alphaBeta<BLACK, true, false>(board, -SCORE_INFINITY, SCORE_INFINITY, MAXDEPTH, 0, nullptr);
+					score2 = Search::alphaBeta<WHITE, true, false>(board.flip(), -SCORE_INFINITY, SCORE_INFINITY, MAXDEPTH, 0, nullptr);
+				}
+
+				Assert::AreEqual(score1, score2);
+			}
 		}
 	};
 }
