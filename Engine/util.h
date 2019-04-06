@@ -109,6 +109,6 @@ namespace Util
 	template <Color color>
 	constexpr Bitboard backRank()
 	{
-		return relativeRank<color, RANK_8>();
+		return RankBB[relativeRank<color, RANK_8>()];
 	}
 }

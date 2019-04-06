@@ -55,29 +55,28 @@ namespace MoveGen
 					moves[size++] = Move(PAWN, from, to, FLAG_CAPTURE);
 			}
 
+			targets = pawnSinglePushTargets<toMove>(SquareBB[from], ~board.occupied());
+			if (quiescence)
+				targets &= Util::backRank<toMove>();
+
+			for (Square to : BitboardIterator<Square>(targets))
+			{
+				if (SquareBB[to] & Util::backRank<toMove>())
+				{
+					moves[size++] = Move(PAWN, from, to, QUEEN);
+					moves[size++] = Move(PAWN, from, to, ROOK);
+					moves[size++] = Move(PAWN, from, to, BISHOP);
+					moves[size++] = Move(PAWN, from, to, KNIGHT);
+				}
+				else
+					moves[size++] = Move(PAWN, from, to);
+			}
+
 			if (!quiescence)
 			{
-				Bitboard targets = pawnSinglePushTargets<toMove>(SquareBB[from], ~board.occupied());
-
-				if (targets)
-				{
-					Square to = Util::bitScanForward(targets);
-
-					if (SquareBB[to] & Util::backRank<toMove>())
-					{
-						moves[size++] = Move(PAWN, from, to, QUEEN);
-						moves[size++] = Move(PAWN, from, to, ROOK);
-						moves[size++] = Move(PAWN, from, to, BISHOP);
-						moves[size++] = Move(PAWN, from, to, KNIGHT);
-					}
-					else
-						moves[size++] = Move(PAWN, from, to);
-				}
-
 				targets = pawnDoublePushTargets<toMove>(SquareBB[from], ~board.occupied());
-				if (targets)
+				for (Square to : BitboardIterator<Square>(targets))
 				{
-					Square to = Util::bitScanForward(targets);
 					moves[size++] = Move(PAWN, from, to, FLAG_DOUBLE_PUSH);
 				}
 			}
