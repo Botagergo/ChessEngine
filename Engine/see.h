@@ -49,7 +49,7 @@ int see(const Board & board, Move move)
 		curr_piece = toPieceType(board.pieceAt(attacker[color]));
 	}
 
-	int best = 0, curr = 0, i;
+	int best = -SCORE_INFINITY, curr = 0, i;
 	for (i = 1; i < scores.size(); i += 2)
 	{
 		if (scores[i] > best)
