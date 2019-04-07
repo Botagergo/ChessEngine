@@ -183,26 +183,13 @@ int main(int argc, char *argv[])
 		else if (token == "perft")
 		{
 			int depth = 6;
-			std::string fen = start_fen;
 			std::vector<std::string> str_moves;
-			bool per_move = false, full = false;
+			bool divided = false, full = false;
 
 			while (iss >> token)
 			{
 				if (token == "depth")
 					iss >> depth;
-				else if (token == "fen")
-				{
-					std::stringstream ss;
-					for (int i = 0; i < 6; ++i)
-					{
-						std::string part;
-						iss >> part;
-						ss << part << " ";
-					}
-
-					fen = ss.str();
-				}
 				else if (token == "moves")
 				{
 					int n;
@@ -214,9 +201,9 @@ int main(int argc, char *argv[])
 						str_moves.push_back(move_str);
 					}
 				}
-				else if (token == "per_move")
+				else if (token == "divided")
 				{
-					per_move = true;
+					divided = true;
 				}
 				else if (token == "full")
 				{
@@ -226,7 +213,6 @@ int main(int argc, char *argv[])
 					continue;
 			}
 
-			Board board = Board::fromFen(fen);
 			std::vector<Move> moves;
 
 			for (auto move : str_moves)
@@ -234,7 +220,7 @@ int main(int argc, char *argv[])
 				moves.push_back(Move::parse(board, move));
 			}
 
-			perftReceived(board, depth, moves, per_move, full);
+			perftReceived(board, depth, moves, divided, full);
 		}
 		else
 		{

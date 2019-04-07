@@ -18,7 +18,7 @@ namespace Evaluation
 	extern const Score HalfOpenFileBonus;
 	extern const Score OpenFileBonus;
 	extern const int KingAttacks[200];
-	extern const int KingAttacksWeight[PIECE_NB];
+	extern const int KingAttacksWeight[PIECE_TYPE_NB];
 
 
 	template <Color color>

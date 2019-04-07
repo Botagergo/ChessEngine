@@ -52,6 +52,8 @@ public:
 
 	bool isInCheck(Color color) const;
 
+	bool allowNullMove(Color color) const;
+
 	int halfmoveClock() const;
 	int fullmoveNum() const;
 
@@ -105,7 +107,10 @@ Bitboard Board::pinnedPieces() const
 	for (Square pinner : BitboardIterator<Square>(pinners))
 	{
 		Bitboard b = ObstructedTable[pinner][king] & occupied();
-		if ((b != 0) && (b & (b - 1)) == 0 && ((b & occupied(color)) != 0))
+
+		if ((b != 0)							// Van a pinner és a király között figura
+			&& (b & (b - 1)) == 0				// Csak egy figura van a pinner és a király között
+			&& ((b & occupied(color)) != 0))	// Ez a figura a sajátunk
 			pinned |= b;
 	}
 

@@ -29,6 +29,7 @@ public:
 	bool isCastle(Side side) const;
 	bool isValid() const;
 	bool isNull() const;
+	bool isQuiet() const;
 
 	bool operator==(Move move) const;
 	bool operator!=(Move move) const;

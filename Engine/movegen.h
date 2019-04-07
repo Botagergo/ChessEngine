@@ -143,7 +143,7 @@ namespace MoveGen
 	int mvvlva(const Board & board, Move move);
 
 	template <Color toMove>
-	int pieceSquareEval(const Board & board, Move move)
+	int pieceSquareEval(Move move)
 	{
 		return Evaluation::pieceSquareValue<toMove>(move.pieceType(), move.to()).mg
 			- Evaluation::pieceSquareValue<toMove>(move.pieceType(), move.from()).mg;
@@ -203,13 +203,13 @@ namespace MoveGen
 			for (int i = 0; i < _move_count; ++i)
 			{
 				if (_moves[i].isPromotion())
-					_scores[i] = Evaluation::PieceValue[_moves[i].promotion()].mg;
+					_scores[i] = Evaluation::PieceValue[_moves[i].promotion()].mg * 10;
 				else if (_moves[i].isCapture())
 				{
 					if (quiescence)
-						_scores[i] = mvvlva(_board, _moves[i]);
+						_scores[i] = mvvlva(_board, _moves[i]) * 10;
 					else
-						_scores[i] = see<toMove>(_board, _moves[i]);
+						_scores[i] = see<toMove>(_board, _moves[i]) * 10;
 				}
 				else if (!quiescence && (_moves[i] == _killer_moves.first || _moves[i] == _killer_moves.second))
 				{
@@ -217,7 +217,7 @@ namespace MoveGen
 				}
 				else
 				{
-					_scores[i] = -10;
+					_scores[i] = pieceSquareEval<toMove>(_moves[i]);
 				}
 			}
 		}

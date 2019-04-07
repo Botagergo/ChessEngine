@@ -322,6 +322,13 @@ bool Board::isInCheck(Color color) const
 	return pieces(color, KING) & attacked(~color);
 }
 
+bool Board::allowNullMove(Color color) const
+{
+	// Ha kevés figura van a táblán, akkor zugzwang miatt kockácatos a null move engedélyezése
+	return material(color, KNIGHT) + material(color, BISHOP)
+		+ material(color, ROOK) + material(color, QUEEN) >= 3;
+}
+
 int Board::halfmoveClock() const
 {
 	return _halfmove_clock;

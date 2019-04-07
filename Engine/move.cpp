@@ -128,6 +128,11 @@ bool Move::isNull() const
 	return _move & FLAG_NULL;
 }
 
+bool Move::isQuiet() const
+{
+	return !isCapture() && !isPromotion();
+}
+
 bool Move::operator==(Move move) const
 {
 	return move._move == _move;

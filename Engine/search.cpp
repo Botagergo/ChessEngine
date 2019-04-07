@@ -134,9 +134,12 @@ namespace Search
 
 	void sendPrincipalVariation(const std::vector<Move> & pv, int depth, int score, bool mate)
 	{
+		int moves_nb = depth;
+
 		if (SCORE_MIN_MATE <= abs(score) && abs(score) <= SCORE_MAX_MATE)
 		{
-			int mate_in = (int)round((SCORE_MAX_MATE - abs(score)) / 2.0);
+			int moves_nb = SCORE_MAX_MATE - abs(score);
+			int mate_in  = (int)round(moves_nb / 2.0);
 			if (score < 0)
 				mate_in *= -1;
 			std::cout << "info depth " << depth << " score mate " << mate_in << " pv";
@@ -144,7 +147,7 @@ namespace Search
 		else
 			std::cout << "info depth " << depth << " score cp " << score << " pv";
 
-		for (int i = 0; i < depth; ++i)
+		for (int i = 0; i < moves_nb; ++i)
 		{
 			std::cout << " " << pv[i].toAlgebraic();
 		}

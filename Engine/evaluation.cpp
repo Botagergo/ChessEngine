@@ -89,4 +89,4 @@ const int Evaluation::KingAttacks[200] = {
 
 #undef S
 
-const int Evaluation::KingAttacksWeight[PIECE_NB] = { 0, 2, 2, 4, 6, 0 };
+const int Evaluation::KingAttacksWeight[PIECE_TYPE_NB] = { 0, 2, 2, 4, 6, 0 };

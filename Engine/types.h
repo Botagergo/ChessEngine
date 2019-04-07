@@ -124,8 +124,8 @@ Score operator*(const Score &score, double d);
 
 enum ScoreConstant
 {
-	SCORE_KILLER = -1,
 	SCORE_DRAW = 0,
+	SCORE_KILLER = 150,
 	SCORE_MIN_MATE = 32667,
 	SCORE_MAX_MATE = 32767,
 	SCORE_INFINITY = 32768,
