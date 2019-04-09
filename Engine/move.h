@@ -16,6 +16,8 @@ public:
 	static Move fromAlgebraic(const Board & board, std::string algebraic);
 	std::string toAlgebraic() const;
 
+	static Move fromSan(const Board &board, const std::string &san);
+
 	PieceType pieceType() const;
 	Square from() const;
 	Square to() const;

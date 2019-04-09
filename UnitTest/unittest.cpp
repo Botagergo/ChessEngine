@@ -10,15 +10,30 @@
 #include "util.h"
 #include "zobrist.h"
 
+#include <locale>
+#include <codecvt>
+#include <string>
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace std;
 using namespace Evaluation;
 using namespace Constants;
 
+std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+
 template<> inline std::wstring  Microsoft::VisualStudio::CppUnitTestFramework::ToString<Color>(const Color& c) { RETURN_WIDE_STRING((int)c); }
 template<> inline std::wstring  Microsoft::VisualStudio::CppUnitTestFramework::ToString<Square>(const Square& s) { RETURN_WIDE_STRING((int)s); }
 template<> inline std::wstring  Microsoft::VisualStudio::CppUnitTestFramework::ToString<Piece>(const Piece& p) { RETURN_WIDE_STRING((int)p); }
 template<> inline std::wstring  Microsoft::VisualStudio::CppUnitTestFramework::ToString<PieceType>(const PieceType& p) { RETURN_WIDE_STRING((int)p); }
+template<> inline std::wstring  Microsoft::VisualStudio::CppUnitTestFramework::ToString<Move>(const Move& m) { return converter.from_bytes(m.toAlgebraic()); }
+
+void init()
+{
+	initSquareBB();
+	initAttackTables();
+	initObstructedTable();
+	Zobrist::initZobristHashing();
+}
 
 namespace UnitTests
 {
@@ -435,6 +450,36 @@ namespace UnitTests
 
 				Assert::AreEqual(score1, score2);
 			}
+		}
+
+		TEST_METHOD(Move_fromSan_Test)
+		{
+			init();
+
+			Board board = Board::fromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ");
+
+			Assert::AreEqual(Move(PAWN, E2, E4, FLAG_DOUBLE_PUSH), Move::fromSan(board, "e4"));
+			Assert::AreEqual(Move(PAWN, E2, E3, 0), Move::fromSan(board, "e3"));
+			Assert::AreEqual(Move(KNIGHT, B1, C3, 0), Move::fromSan(board, "Nc3"));
+
+			board = Board::fromFen("rn1qkb1r/ppp1pp2/7p/3p2p1/3Pn1b1/2N1PNBP/PPP2PP1/R2QKB1R b KQkq - 0 7 ");
+			Assert::AreEqual(Move(BISHOP, G4, F3, FLAG_CAPTURE), Move::fromSan(board, "Bxf3"));
+
+			board = Board::fromFen("r2qkb1r/ppp1pp2/7p/3p2p1/n2Pn3/P1N1PQBP/1PP2PP1/R3KB1R b Kkq - 8 13 ");
+			Assert::AreEqual(Move(KNIGHT, E4, C3, FLAG_CAPTURE), Move::fromSan(board, "Nexc3"));
+			Assert::AreEqual(Move(KNIGHT, E4, C3, FLAG_CAPTURE), Move::fromSan(board, "Ne4xc3"));
+
+			board = Board::fromFen("r2qk2r/2p1ppb1/p6p/1pPp2p1/3Pn3/P3PQBP/2P2PP1/R3KB1R w Kkq b6 0 17  ");
+			Assert::AreEqual(Move(PAWN, C5, B6, FLAG_CAPTURE|FLAG_EN_PASSANT), Move::fromSan(board, "cxb6e.p"));
+
+			board = Board::fromFen("1k3q2/4P3/8/8/8/8/3K4/8 w - b6 0 17 ");
+			Assert::AreEqual(Move(PAWN, E7, F8, ROOK, FLAG_CAPTURE), Move::fromSan(board, "exf8R"));
+			Assert::AreEqual(Move(PAWN, E7, E8, KNIGHT), Move::fromSan(board, "e8N"));
+			Assert::AreEqual(Move(PAWN, E7, E8, ROOK), Move::fromSan(board, "e8R+"));
+
+			board = Board::fromFen("r2q1rk1/pppbbppp/2np1n2/1B2p1B1/4P3/2NP1N2/PPPQ1PPP/R3K2R w KQ - 4 8 ");
+			Assert::AreEqual(Move::castle(WHITE, KINGSIDE), Move::fromSan(board, "0-0"));
+			Assert::AreEqual(Move::castle(WHITE, QUEENSIDE), Move::fromSan(board, "0-0-0"));
 		}
 	};
 }

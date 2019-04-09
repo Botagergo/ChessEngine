@@ -12,11 +12,11 @@ enum Direction
 };
 
 enum File {
-	A_FILE, B_FILE, C_FILE, D_FILE, E_FILE, F_FILE, G_FILE, H_FILE, FILE_NB
+	NO_FILE = -1, A_FILE, B_FILE, C_FILE, D_FILE, E_FILE, F_FILE, G_FILE, H_FILE, FILE_NB
 };
 
 enum Rank {
-	RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8
+	NO_RANK = -1, RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8
 };
 
 enum Color {
@@ -58,6 +58,9 @@ Piece charToPiece(char c);
 
 char pieceTypeToChar(PieceType p);
 char pieceToChar(Piece p);
+
+File charToFile(char f);
+Rank charToRank(char r);
 
 Color pieceColor(Piece piece);
 

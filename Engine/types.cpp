@@ -85,6 +85,24 @@ char pieceToChar(Piece p)
 	return map[p];
 }
 
+File charToFile(char f)
+{
+	int file = f - 'a';
+	if (f < 'a' || 'h' < f)
+		return NO_FILE;
+
+	return File(file);
+}
+
+Rank charToRank(char r)
+{
+	int rank = r - '1';
+	if (r < '1' || '8' < r)
+		return NO_RANK;
+
+	return Rank(rank);
+}
+
 Color pieceColor(Piece piece)
 {
 	if (piece <= NO_PIECE || PIECE_NB <= piece)

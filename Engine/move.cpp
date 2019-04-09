@@ -1,6 +1,7 @@
 #include <regex>
 #include <sstream>
 
+#include "attacks.h"
 #include "board.h"
 #include "constants.h"
 #include "move.h"
@@ -167,3 +168,95 @@ std::string Move::toAlgebraic() const
 		ss << pieceTypeToChar(promotion());
 	return ss.str();
 }
+
+bool isRank(char c)
+{
+	return '1' <= c && c <= '8';
+}
+
+bool isFile(char c)
+{
+	return 'a' <= c && c <= 'h';
+}
+
+Move Move::fromSan(const Board &board, const std::string &san)
+{
+	Square from = NO_SQUARE, to = NO_SQUARE;
+	int flags = 0;
+
+	std::string pawn_regex = "^(?:([a-h])x)?([a-h][1-8])(e\\.p)?(N|B|R|Q)?(\\+|#)?$";
+	std::string piece_move_regex = "^(N|B|R|Q|K)([a-h])?([1-8])?(x)?([a-h][1-8])(\\+|#)?$";
+	std::string king_castle_regex = "^0-0(\\+|#)?$";
+	std::string queen_castle_regex = "^0-0-0(\\+|#)?$";
+
+	std::smatch match;
+	if (std::regex_search(san, match, std::regex(pawn_regex)))
+	{
+		to = parseSquare(match[2]);
+		if (match[1].matched)
+		{
+			Bitboard pawns = board.pieces(board.toMove(), PAWN) & Constants::FileBB[charToFile(*match[1].first)];
+			for (Square from : BitboardIterator<Square>(pawns))
+			{
+				if (board.attacked(from) & Constants::SquareBB[to])
+				{
+					flags = FLAG_CAPTURE;
+					if (match[3].matched)
+						flags |= FLAG_EN_PASSANT;
+					if (match[4].matched)
+						return Move(PAWN, from, to, charToPieceType(*match[4].first), flags);
+					else
+						return Move(PAWN, from, to, flags);
+				}
+			}
+			return Move();
+		}
+		else
+		{
+			Bitboard pawns = board.pieces(board.toMove(), PAWN) & Constants::FileBB[charToFile(*match[2].first)];
+			for (Bitboard from : BitboardIterator<Bitboard>(pawns))
+			{
+				if (board.toMove() == WHITE && (pawnSinglePushTargets<WHITE>(from, ~board.occupied()) & Constants::SquareBB[to])
+					|| board.toMove() == BLACK && (pawnSinglePushTargets<BLACK>(from, ~board.occupied()) & Constants::SquareBB[to]))
+				{
+					if (match[4].matched)
+						return Move(PAWN, Util::bitScanForward(from), to, charToPieceType(*match[4].first), 0);
+					else
+						return Move(PAWN, Util::bitScanForward(from), to, 0);
+				}
+				else if (board.toMove() == WHITE && (pawnDoublePushTargets<WHITE>(from, ~board.occupied()) & Constants::SquareBB[to])
+					|| board.toMove() == BLACK && (pawnDoublePushTargets<BLACK>(from, ~board.occupied()) & Constants::SquareBB[to]))
+				{
+					return Move(PAWN, Util::bitScanForward(from), to, FLAG_DOUBLE_PUSH);
+				}
+			}
+			return Move();
+		}
+	}
+	else if (std::regex_search(san, match, std::regex(piece_move_regex)))
+	{
+		Bitboard pieces = board.pieces(board.toMove(), charToPieceType(*match[1].first));
+		if (match[2].matched)
+			pieces &= Constants::FileBB[charToFile(*match[2].first)];
+		if (match[3].matched)
+			pieces &= Constants::RankBB[charToRank(*match[3].first)];
+		for (Square from : BitboardIterator<Square>(pieces))
+		{
+			if (board.attacked(from) & Constants::SquareBB[parseSquare(match[5])])
+			{
+				flags = 0;
+				if (match[4].matched)
+					flags = FLAG_CAPTURE;
+				return Move(charToPieceType(*match[1].first), from, parseSquare(match[5]), flags);
+			}
+		}
+		return Move();
+	}
+	else if (std::regex_search(san, match, std::regex(king_castle_regex)))
+		return Move::castle(board.toMove(), KINGSIDE);
+	else if (std::regex_search(san, match, std::regex(queen_castle_regex)))
+		return Move::castle(board.toMove(), QUEENSIDE);
+
+	return Move();
+}
+
