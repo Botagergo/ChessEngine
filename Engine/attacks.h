@@ -35,7 +35,7 @@ Bitboard pawnSinglePushTargets(Bitboard pawns, Bitboard empty) {
 template <Color color>
 Bitboard pawnDoublePushTargets(Bitboard pawns, Bitboard empty) {
 	Bitboard res = pawnSinglePushTargets<color>(pawns, empty);
-	return pawnSinglePushTargets<color>(res, empty) & RankBB[Util::relativeRank<color, RANK_4>()];
+	return pawnSinglePushTargets<color>(res, empty) & Constants::RankBB[Util::relativeRank<color, RANK_4>()];
 }
 
 

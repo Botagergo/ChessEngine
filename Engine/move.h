@@ -13,7 +13,7 @@ public:
 	Move(PieceType piece_type, Square from, Square to, unsigned flags = 0);
 	Move(PieceType piece_type, Square from, Square to, PieceType promotion, unsigned flags = 0);
 
-	static Move parse(const Board & board, std::string algebraic);
+	static Move fromAlgebraic(const Board & board, std::string algebraic);
 	std::string toAlgebraic() const;
 
 	PieceType pieceType() const;

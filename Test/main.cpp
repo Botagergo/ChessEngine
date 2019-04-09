@@ -68,9 +68,9 @@ int main(int argc, char *argv[])
 		{
 			iss >> token;
 			if (token == "on")
-				Search::debug = true;
+				Search::searchInfo.debug = true;
 			else if (token == "off")
-				Search::debug = false;
+				Search::searchInfo.debug = false;
 		}
 		else if (token == "isready")
 		{
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 			board = Board::fromFen(fen);
 			for (std::string move : moves)
 			{
-				board.makeMove(Move::parse(board, move));
+				board.makeMove(Move::fromAlgebraic(board, move));
 			}
 		}
 		else if (token == "go")
@@ -133,14 +133,15 @@ int main(int argc, char *argv[])
 			std::map<Command, CommandParam> commands;
 			commands[Command::depth].number = maxdepth;
 
-			Search::ponder = false;
+			Search::searchInfo.ponder = false;
+			Search::searchInfo.sendOutput = true;
 
 			while (iss >> token)
 				if (token == "searchmoves")
 					while (iss >> token)
 						commands[Command::search_moves].str += std::string(" ", commands[Command::search_moves].str.empty() ? 0 : 1) + token;
 				else if (token == "ponder")
-					Search::ponder = true;
+					Search::searchInfo.ponder = true;
 				else if (token == "wtime")
 					iss >> commands[Command::white_time].number;
 				else if (token == "btime")
@@ -166,11 +167,11 @@ int main(int argc, char *argv[])
 		}
 		else if (token == "stop")
 		{
-			Search::stop = true;
+			Search::searchInfo.stop = true;
 		}
 		else if (token == "ponderhit")
 		{
-			Search::ponder = false;
+			Search::searchInfo.ponder = false;
 		}
 		else if (token == "quit")
 		{
@@ -217,7 +218,7 @@ int main(int argc, char *argv[])
 
 			for (auto move : str_moves)
 			{
-				moves.push_back(Move::parse(board, move));
+				moves.push_back(Move::fromAlgebraic(board, move));
 			}
 
 			perftReceived(board, depth, moves, divided, full);
@@ -241,8 +242,8 @@ void setoptionReceived(std::string name, std::string value)
 		std::stringstream ss(value);
 		int size_mb;
 		ss >> size_mb;
-		Search::transposition_table.resize(size_mb);
-		Search::evaluation_table.resize(size_mb);
+		Search::searchInfo.transposition_table.resize(size_mb);
+		Search::searchInfo.evaluation_table.resize(size_mb);
 	}
 }
 

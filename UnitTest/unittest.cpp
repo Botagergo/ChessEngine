@@ -193,7 +193,7 @@ namespace UnitTests
 			Assert::IsFalse(move.isPromotion());
 
 			Board board = Board::fromFen("r1bqk2r/ppp2ppp/2n1pn2/8/1bBP4/2N1PN2/PP3PPP/R1BQ1RK1 b kq - 3 7 ");
-			move = Move::parse(board, "b4c3");
+			move = Move::fromAlgebraic(board, "b4c3");
 
 			Assert::IsTrue(move.from() == B4);
 			Assert::IsTrue(move.to() == C3);
@@ -286,7 +286,7 @@ namespace UnitTests
 
 				for (std::string move : moves[i])
 				{
-					board.makeMove(Move::parse(board, move));
+					board.makeMove(Move::fromAlgebraic(board, move));
 				}
 
 				unsigned long long hash1 = board.hash();
@@ -308,23 +308,23 @@ namespace UnitTests
 
 			Board board = Board::fromFen("rnb1kbnr/pppp1ppp/8/4p1q1/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3 ");
 
-			Move move = Move::parse(board, "f3g5");
-			Assert::AreEqual(PieceValue[QUEEN].mg, see<WHITE>(board, Move::parse(board, "f3g5")));
+			Move move = Move::fromAlgebraic(board, "f3g5");
+			Assert::AreEqual(PieceValue[QUEEN].mg, see<WHITE>(board, Move::fromAlgebraic(board, "f3g5")));
 
 			board = Board::fromFen("rnb1k1nr/ppppbppp/8/4p1q1/4P3/2N2N2/PPPP1PPP/R1BQKB1R w KQkq - 4 4 ");
-			Assert::AreEqual(PieceValue[QUEEN].mg - PieceValue[KNIGHT].mg, see<WHITE>(board, Move::parse(board, "f3g5")));
+			Assert::AreEqual(PieceValue[QUEEN].mg - PieceValue[KNIGHT].mg, see<WHITE>(board, Move::fromAlgebraic(board, "f3g5")));
 
 			board = Board::fromFen("rnb1k1nr/1pppbppp/p7/4p1q1/4P3/2NP1N2/PPP2PPP/R1BQKB1R w KQkq - 0 5 ");
-			Assert::AreEqual(PieceValue[QUEEN].mg - PieceValue[KNIGHT].mg + PieceValue[BISHOP].mg, see<WHITE>(board, Move::parse(board, "f3g5")));
+			Assert::AreEqual(PieceValue[QUEEN].mg - PieceValue[KNIGHT].mg + PieceValue[BISHOP].mg, see<WHITE>(board, Move::fromAlgebraic(board, "f3g5")));
 
 			board = Board::fromFen("rnb1k1nr/1pppb1pp/p4p2/4p1q1/4P3/2NP1N2/PPPQ1PPP/R1B1KB1R w KQkq - 0 6 ");
-			Assert::AreEqual(PieceValue[QUEEN].mg - PieceValue[KNIGHT].mg, see<WHITE>(board, Move::parse(board, "f3g5")));
+			Assert::AreEqual(PieceValue[QUEEN].mg - PieceValue[KNIGHT].mg, see<WHITE>(board, Move::fromAlgebraic(board, "f3g5")));
 
 			board = Board::fromFen("r2qkb1r/p1pbpppp/1pnp1n2/1B6/Q2P4/2P1P3/PP3PPP/RNB1K1NR w KQkq - 0 6 ");
-			Assert::AreEqual(PieceValue[KNIGHT].mg, see<WHITE>(board, Move::parse(board, "b5c6")));
+			Assert::AreEqual(PieceValue[KNIGHT].mg, see<WHITE>(board, Move::fromAlgebraic(board, "b5c6")));
 
 			board = Board::fromFen("r2qkb1r/p1pbpppp/1pnp1n2/8/Q2P4/2P1P3/PP3PPP/RNB1K1NR w KQkq - 0 6 ");
-			Assert::AreEqual(PieceValue[KNIGHT].mg - PieceValue[QUEEN].mg, see<WHITE>(board, Move::parse(board, "a4c6")));
+			Assert::AreEqual(PieceValue[KNIGHT].mg - PieceValue[QUEEN].mg, see<WHITE>(board, Move::fromAlgebraic(board, "a4c6")));
 		}
 
 		TEST_METHOD(isPassedPawn_Test)

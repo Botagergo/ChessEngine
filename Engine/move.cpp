@@ -19,7 +19,7 @@ Move::Move(PieceType piece_type, Square from, Square to, PieceType promotion, un
 	: Move(piece_type | (from << 3) | (to << 9) | (promotion << 15) | FLAG_PROMOTION | flags)
 {}
 
-Move Move::parse(const Board & board, std::string algebraic)
+Move Move::fromAlgebraic(const Board & board, std::string algebraic)
 {
 	const static std::string square_regex = "([a-h][1-8])";
 	const static std::string promotion_regex = "(n|b|r|q)?";
