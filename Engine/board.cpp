@@ -39,8 +39,8 @@ Board Board::fromFen(const std::string &fen)
 	const static std::string to_move_regex = "(w|b)";
 	const static std::string castling_rights_regex = "(\\-|[KQkq]{1,4})";
 	const static std::string en_passant_square_regex = "(\\-|[a-h][1-8])";
-	const static std::string halfmove_clock_regex = "(0|[1-9][0-9]*)?";
-	const static std::string fullmove_number_regex = "([1-9][0-9]*)?";
+	const static std::string halfmove_clock_regex = "(0|[1-9][0-9]*)";
+	const static std::string fullmove_number_regex = "([1-9][0-9]*)";
 	const static std::string whitespace_regex = "\\s*";
 
 	const static std::string fen_regex = std::string("^") +
