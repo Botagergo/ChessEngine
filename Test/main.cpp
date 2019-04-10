@@ -1,10 +1,12 @@
 #include "attacks.h"
 #include "board.h"
 #include "bitboard_iterator.h"
+#include "epd.h"
 #include "perft.h"
 #include "zobrist.h"
 
 #include <iostream>
+#include <fstream>
 #include <map>
 #include <search.h>
 
@@ -15,6 +17,8 @@ const std::string start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQk
 void setoptionReceived(std::string name, std::string value);
 void perftReceived(Board board, int depth, std::vector<Move> moves, bool per_move, bool full);
 void printPerftRes(const Perft::PerftResult &res);
+
+void runTest(const std::string &in_file, int depth, const std::string &out_file = "");
 
 Board board;
 int maxdepth = 9;
@@ -223,6 +227,14 @@ int main(int argc, char *argv[])
 
 			perftReceived(board, depth, moves, divided, full);
 		}
+		else if (token == "run_test")
+		{
+			std::string filename;
+			int depth;
+			iss >> filename;
+			iss >> depth;
+			runTest(filename, depth);
+		}
 		else
 		{
 			std::cout << "Unrecognized command: " << line << std::endl;
@@ -294,4 +306,99 @@ void printPerftRes(const Perft::PerftResult& res)
 	std::cout << "kingside castles\t" << res.king_castles << std::endl;
 	std::cout << "queenside castles\t" << res.queen_castles << std::endl;
 	std::cout << "promotions\t\t" << res.promotions << std::endl;
+}
+
+void runTest(const std::string &in_file, int depth, const std::string &out_file)
+{
+	std::ifstream in(in_file);
+
+	if (!in)
+	{
+		std::cerr << "Error opening test file: " << in_file << std::endl;
+		return;
+	}
+
+	std::vector<EpdData> epdData;
+
+	char buf[256];
+	while (in.getline(buf, 256))
+	{
+		try
+		{
+			epdData.push_back(EpdData(buf));
+		}
+		catch (EpdParseError e)
+		{
+			std::cerr << "Invalid epd string: " << buf << std::endl;
+			return;
+		}
+	}
+
+	std::vector<std::string> messages;
+	messages.reserve(epdData.size());
+
+	int passed = 0;
+	Search::searchInfo.sendOutput = false;
+
+	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+
+	for (int i = 0; i < epdData.size(); ++i)
+	{
+		std::stringstream status_message;
+		status_message << "Running tests... (" << i + 1 << "/" << epdData.size() << ")";
+		std::cout << status_message.str();
+
+		std::stringstream message;
+		Move bestMove;
+		Search::search(epdData[i].board, depth, &bestMove);
+
+		message << epdData[i].id << "\t:\t";
+		if (epdData[i].avoidMove.isValid() && bestMove == epdData[i].avoidMove)
+			message << "incorrect move: " << bestMove.toAlgebraic();
+		else if (epdData[i].bestMove.isValid() && bestMove != epdData[i].bestMove)
+			message << "expected: " << epdData[i].bestMove.toAlgebraic() << ", actual:" << bestMove.toAlgebraic();
+		else
+		{
+			message << "OK";
+			passed++;
+		}
+
+		messages.push_back(message.str());
+		std::cout << std::string(status_message.str().size(), '\b');
+	}
+
+	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+	u64 duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+	chrono::system_clock::time_point timestamp = chrono::system_clock::now();
+	time_t t = chrono::system_clock::to_time_t(timestamp);
+
+	std::string filename = out_file;
+
+	if (filename.empty())
+	{
+		std::stringstream ss;
+		ss << in_file << "_" << t << ".txt";
+		filename = std::string(ss.str());
+	}
+
+	std::ofstream out(filename);
+	if (!out)
+	{
+		std::cerr << "Error creating test result file" << std::endl;
+		return;
+	}
+
+	out << "test duration:\t" << duration / 1000.0 << " seconds " << std::endl;
+	out << "passed:\t\t\t" << passed << std::endl;
+	out << "failed:\t\t\t" << epdData.size() - passed << std::endl;
+	out << std::endl;
+
+	for (const std::string &message : messages)
+	{
+		out << message << std::endl;
+	}
+
+	out.close();
+	std::cout << std::endl << "Finished" << std::endl;
 }
