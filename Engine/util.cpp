@@ -1,4 +1,5 @@
 #include <intrin.h>
+#include <algorithm>
 
 #include "util.h"
 
@@ -27,7 +28,7 @@ namespace Util
 #ifdef _M_AMD64
 		_BitScanForward64(&bit, bb);
 #else
-		_BitScanForward(&bit, bb);
+		_BitScanForward(&bit, bb & ((1l << 32) - 1)) || _BitScanForward(&bit, bb >> 32);
 #endif
 		return static_cast<Square>(bit);
 	}
@@ -47,13 +48,18 @@ namespace Util
 
 		_BitScanReverse64(&bit, bb);
 #else
-		_BitScanReverse(&bit, bb);
+		_BitScanReverse(&bit, bb >> 32) || _BitScanReverse(&bit, bb & ((1l << 32) - 1));
 #endif
 		return static_cast<Square>(bit);
 	}
 
-	int popCount(Bitboard b) {
-		return static_cast<int>(_mm_popcnt_u64(b));
+	int popCount(Bitboard bb) {
+#ifdef _M_AMD64
+		return static_cast<int>(_mm_popcnt_u64(bb));
+#else
+		return static_cast<int>(_mm_popcnt_u32(bb & ((1l << 32) - 1)) + _mm_popcnt_u32(bb >> 32));
+#endif
+
 	}
 
 	File getFile(Square square)
