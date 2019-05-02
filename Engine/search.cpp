@@ -16,10 +16,7 @@ namespace Search
 		while (true)
 		{
 			std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-
-			//updateNodesPerSec();
-
-			//std::cout << "info hashfull " << (int)(searchInfo.transposition_table.usage() * 1000) << std::endl;
+			updateNodesPerSec();
 
 			if (searchInfo.stop)
 				break;
@@ -28,16 +25,15 @@ namespace Search
 
 	void updateNodesPerSec()
 	{
-		u64 curr_node_count = searchInfo.Stats.alpha_beta_nodes + searchInfo.Stats.quiescence_nodes;
-		double node_diff = (double)(curr_node_count - searchInfo.NodeCountInfo.last_node_count);
+		searchInfo.NodeCountInfo.node_count = searchInfo.Stats.alpha_beta_nodes + searchInfo.Stats.quiescence_nodes;
+		double node_diff = (double)(searchInfo.NodeCountInfo.node_count - searchInfo.NodeCountInfo.last_node_count);
 
 		std::chrono::steady_clock::time_point curr_time = std::chrono::steady_clock::now();
 		u64 time_diff = std::chrono::duration_cast<std::chrono::microseconds>(curr_time - searchInfo.NodeCountInfo.last_time).count();
 
-		std::cout << "info nodes " << curr_node_count
-			<< " nps " << (int)(node_diff * (1000000.0 / time_diff)) << std::endl;
+		searchInfo.NodeCountInfo.nodes_per_sec = (int)(node_diff * (1000000.0 / time_diff));
 
-		searchInfo.NodeCountInfo.last_node_count = curr_node_count;
+		searchInfo.NodeCountInfo.last_node_count = searchInfo.NodeCountInfo.node_count;
 		searchInfo.NodeCountInfo.last_time = curr_time;
 	}
 
@@ -108,7 +104,7 @@ namespace Search
 		if (bestMove)
 			*bestMove = pv[searched_depth][0];
 
-		searchInfo.Stats.avg_searched_moves = (float)(searchInfo.Stats.alpha_beta_nodes / (double)searchInfo.Stats._move_gen_count);
+		searchInfo.Stats.avg_searched_moves = (float)(searchInfo.Stats.alpha_beta_nodes / (double)searchInfo.move_gen_count);
 
 		if (searchInfo.debug && searchInfo.sendOutput)
 			sendStats();
@@ -157,6 +153,17 @@ namespace Search
 	void sendCurrentMove(Move move, int pos)
 	{
 		std::cout << "info currmove " << move.toAlgebraic() << " currmovenumber " << pos << std::endl;
+	}
+
+	void sendNodeInfo(u64 node_count, u64 nodes_per_sec)
+	{
+		std::cout << "info nodes " << node_count
+			<< " nps " << nodes_per_sec << std::endl;
+	}
+
+	void sendHashfull(int permill)
+	{
+		std::cout << "info hashfull " << permill << std::endl;
 	}
 
 	void sendStats()

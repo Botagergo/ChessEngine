@@ -72,6 +72,9 @@
     <ClInclude Include="epd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="moveselect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="constants.cpp">
@@ -98,9 +101,6 @@
     <ClCompile Include="search.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="movegen.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="move.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -111,6 +111,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="see.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="moveselect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

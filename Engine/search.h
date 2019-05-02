@@ -8,6 +8,7 @@
 #include "evaluation.h"
 #include "evaluation_table.h"
 #include "movegen.h"
+#include "moveselect.h"
 #include "transposition_table.h"
 #include "types.h"
 
@@ -33,6 +34,9 @@ namespace Search
 		bool passed_maxdepth = false;
 		bool sendOutput = true;
 
+		u64 move_gen_count;
+		u64 searched_moves_sum;
+
 		struct
 		{
 			u64 alpha_beta_nodes;
@@ -44,15 +48,14 @@ namespace Search
 			u64 hash_score_returned;
 			u64 pv_search_research_count;
 			float avg_searched_moves;
-
-			u64 _move_gen_count;
-			u64 _searched_moves_sum;
 		} Stats;
 
 		struct
 		{
 			u64 last_node_count;
+			u64 node_count;
 			std::chrono::steady_clock::time_point last_time;
+			int nodes_per_sec;
 		} NodeCountInfo;
 	};
 
@@ -65,6 +68,8 @@ namespace Search
 	void sendBestMove(Move move, Move ponder_move);
 	void sendPrincipalVariation(const std::vector<Move> & pv, int depth, int score, bool mate);
 	void sendCurrentMove(Move move, int pos);
+	void sendNodeInfo(u64 node_count, u64 nodes_per_sec);
+	void sendHashfull(int permill);
 
 	void startSearch(const Board & board, int maxdepth);
 	void search(const Board & board, int maxdepth, Move *bestMove = nullptr);
@@ -77,6 +82,12 @@ namespace Search
 		assert(depthleft >= 0);
 
 		++searchInfo.Stats.alpha_beta_nodes;
+
+		if (searchInfo.Stats.alpha_beta_nodes % 10000 == 0)
+		{
+			sendNodeInfo(searchInfo.NodeCountInfo.node_count, searchInfo.NodeCountInfo.nodes_per_sec);
+			sendHashfull((int)(searchInfo.transposition_table.usage() * 1000));
+		}
 
 		searchInfo.history[ply] = board.hash();
 
@@ -112,7 +123,6 @@ namespace Search
 				return beta;
 		}
 
-		++Stats._move_gen_count;
 		int curr_pos = 0;
 		int searched_moves = 0;
 		int alpha_orig = alpha;
@@ -126,8 +136,8 @@ namespace Search
 			new_pv_ptr = &new_pv;
 		}
 
-		MoveGen::MoveGenerator<toMove, false> mg(board, hash_move, searchInfo.killer_moves[ply]);
-		searchInfo.Stats._move_gen_count++;
+		MoveSelect::MoveSelector<toMove, false> mg(board, hash_move, searchInfo.killer_moves[ply]);
+		searchInfo.move_gen_count++;
 
 		for(int i = 1; !mg.end(); ++i, mg.next())
 		{
@@ -163,6 +173,7 @@ namespace Search
 SearchEnd:
 
 			++searched_moves;
+			searchInfo.searched_moves_sum++;
 
 			if (score >= beta)
 			{
@@ -171,7 +182,7 @@ SearchEnd:
 				if (mg.curr() == hash_move)
 					++searchInfo.Stats.hash_move_cutoffs;
 
-				if (!mg.curr().isCapture())
+				if (mg.curr().isQuiet())
 				{
 					if (mg.curr() == searchInfo.killer_moves[ply].first || mg.curr() == searchInfo.killer_moves[ply].second)
 						++searchInfo.Stats.killer_move_cutoffs;
@@ -245,10 +256,10 @@ SearchEnd:
 
 		int alpha_orig = alpha;
 
-		MoveGen::MoveGenerator<toMove, true> mg(board, Move());
+		MoveSelect::MoveSelector<toMove, true> mg(board, Move());
 		for (int i = 1; !mg.end(); ++i, mg.next())
 		{
-			assert(mg.curr().isCapture());
+			assert(!mg.curr().isQuiet());
 
 			Board board_copy = board;
 			if (!board_copy.makeMove(mg.curr()))
