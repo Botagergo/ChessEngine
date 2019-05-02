@@ -14,7 +14,7 @@ Perft::PerftResult Perft::perft(Board board, int depth)
 	return res;
 }
 
-std::vector<std::pair<Move, Perft::PerftResult> > Perft::perftPerMove(Board board, int depth)
+std::vector<std::pair<Move, Perft::PerftResult> > Perft::perftDivided(Board board, int depth)
 {
 	auto res = std::vector<std::pair<Move, Perft::PerftResult> >();
 

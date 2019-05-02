@@ -273,7 +273,7 @@ void perftReceived(Board board, int depth, std::vector<Move> moves, bool per_mov
 
 	if (per_move)
 	{
-		auto res = Perft::perftPerMove(board, depth);
+		auto res = Perft::perftDivided(board, depth);
 		for (auto p : res)
 		{
 			std::cout << p.first.toAlgebraic() << ":\t";

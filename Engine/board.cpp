@@ -208,9 +208,9 @@ void Board::print(std::ostream & os) const
 	}
 }
 
-Bitboard Board::pieces(Color color, PieceType piece) const
+Bitboard Board::pieces(Color color, PieceType piece_type) const
 {
-	return _pieces[color][piece];
+	return _pieces[color][piece_type];
 }
 
 Piece Board::pieceAt(Square square) const
@@ -322,11 +322,11 @@ bool Board::isInCheck(Color color) const
 	return pieces(color, KING) & attacked(~color);
 }
 
-bool Board::allowNullMove(Color color) const
+bool Board::allowNullMove() const
 {
 	// Ha kevés figura van a táblán, akkor zugzwang miatt kockácatos a null move engedélyezése
-	return material(color, KNIGHT) + material(color, BISHOP)
-		+ material(color, ROOK) + material(color, QUEEN) >= 3;
+	return material(toMove(), KNIGHT) + material(toMove(), BISHOP)
+		+ material(toMove(), ROOK) + material(toMove(), QUEEN) >= 3;
 }
 
 int Board::halfmoveClock() const

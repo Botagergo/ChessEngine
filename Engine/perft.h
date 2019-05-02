@@ -13,8 +13,7 @@ namespace Perft
 	};
 
 	PerftResult perft(Board board, int depth);
-
-	std::vector<std::pair<Move, PerftResult> > perftPerMove(Board board, int depth);
+	std::vector<std::pair<Move, PerftResult> > perftDivided(Board board, int depth);
 
 	int _perft(Board &board, int depth, int &captures, int &en_passants, int &king_castles, int &queen_castles, int &promotions);
 }

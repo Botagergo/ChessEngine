@@ -52,7 +52,7 @@ public:
 
 	bool isInCheck(Color color) const;
 
-	bool allowNullMove(Color color) const;
+	bool allowNullMove() const;
 
 	int halfmoveClock() const;
 	int fullmoveNum() const;

@@ -260,3 +260,8 @@ Move Move::fromSan(const Board &board, const std::string &san)
 	return Move();
 }
 
+std::string Move::toSan() const
+{
+	assert(false);
+	return "";
+}
