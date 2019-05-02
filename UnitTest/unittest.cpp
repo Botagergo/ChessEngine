@@ -106,8 +106,8 @@ namespace UnitTests
 
 		TEST_METHOD(pawnPushTargets_Test)
 		{
-			Assert::AreEqual(pawnPushTargets<WHITE>(0x1000000000082100Ull, FullBB), 0x29210000Ull);
-			Assert::AreEqual(pawnPushTargets<WHITE>(0x2800002100Ull, FullBB ^ 0x480001200000Ull), 0x200000010000Ull);
+			Assert::AreEqual(Attacks::pawnPushTargets<WHITE>(0x1000000000082100Ull, FullBB), 0x29210000Ull);
+			Assert::AreEqual(Attacks::pawnPushTargets<WHITE>(0x2800002100Ull, FullBB ^ 0x480001200000Ull), 0x200000010000Ull);
 		}
 
 		TEST_METHOD(pawnAttacks_Test)
@@ -115,8 +115,8 @@ namespace UnitTests
 			Bitboard pawns = 0x881000000040000Ull;
 			Bitboard attacks = 0x420000000a000000Ull;
 
-			Assert::AreEqual(pawnAttacks<WHITE>(pawns), attacks);
-			Assert::AreEqual(pawnAttacks<BLACK>(Util::verticalFlip(pawns)), Util::verticalFlip(attacks));
+			Assert::AreEqual(Attacks::pawnAttacks<WHITE>(pawns), attacks);
+			Assert::AreEqual(Attacks::pawnAttacks<BLACK>(Util::verticalFlip(pawns)), Util::verticalFlip(attacks));
 		}
 
 		TEST_METHOD(knightAttacks_Test)
@@ -124,21 +124,21 @@ namespace UnitTests
 			initSquareBB();
 			initAttackTables();
 
-			Assert::AreEqual(knightAttacks(E4), 0x284400442800Ull);
-			Assert::AreEqual(knightAttacks(B4), 0x50800080500Ull);
-			Assert::AreEqual(knightAttacks(D7), 0x2200221400000000Ull);
-			Assert::AreEqual(knightAttacks(G5), 0xa0100010a00000Ull);
-			Assert::AreEqual(knightAttacks(E2), 0x28440044Ull);
-			Assert::AreEqual(knightAttacks(A5), 0x2040004020000Ull);
-			Assert::AreEqual(knightAttacks(D8), 0x22140000000000Ull);
-			Assert::AreEqual(knightAttacks(H5), 0x40200020400000Ull);
-			Assert::AreEqual(knightAttacks(E1), 0x284400Ull);
-			Assert::AreEqual(knightAttacks(B2), 0x5080008Ull);
-			Assert::AreEqual(knightAttacks(A2), 0x2040004Ull);
-			Assert::AreEqual(knightAttacks(A1), 0x20400Ull);
-			Assert::AreEqual(knightAttacks(A8), 0x4020000000000Ull);
-			Assert::AreEqual(knightAttacks(H8), 0x20400000000000Ull);
-			Assert::AreEqual(knightAttacks(H1), 0x402000Ull);
+			Assert::AreEqual(Attacks::knightAttacks(E4), 0x284400442800Ull);
+			Assert::AreEqual(Attacks::knightAttacks(B4), 0x50800080500Ull);
+			Assert::AreEqual(Attacks::knightAttacks(D7), 0x2200221400000000Ull);
+			Assert::AreEqual(Attacks::knightAttacks(G5), 0xa0100010a00000Ull);
+			Assert::AreEqual(Attacks::knightAttacks(E2), 0x28440044Ull);
+			Assert::AreEqual(Attacks::knightAttacks(A5), 0x2040004020000Ull);
+			Assert::AreEqual(Attacks::knightAttacks(D8), 0x22140000000000Ull);
+			Assert::AreEqual(Attacks::knightAttacks(H5), 0x40200020400000Ull);
+			Assert::AreEqual(Attacks::knightAttacks(E1), 0x284400Ull);
+			Assert::AreEqual(Attacks::knightAttacks(B2), 0x5080008Ull);
+			Assert::AreEqual(Attacks::knightAttacks(A2), 0x2040004Ull);
+			Assert::AreEqual(Attacks::knightAttacks(A1), 0x20400Ull);
+			Assert::AreEqual(Attacks::knightAttacks(A8), 0x4020000000000Ull);
+			Assert::AreEqual(Attacks::knightAttacks(H8), 0x20400000000000Ull);
+			Assert::AreEqual(Attacks::knightAttacks(H1), 0x402000Ull);
 		}
 
 		TEST_METHOD(bishopAttacks_Test)
@@ -146,12 +146,12 @@ namespace UnitTests
 			initSquareBB();
 			initAttackTables();
 
-			Assert::AreEqual(bishopAttacks(A8, EmptyBB), 0x2040810204080Ull);
-			Assert::AreEqual(bishopAttacks(E6, EmptyBB), 0x4428002844820100Ull);
-			Assert::AreEqual(bishopAttacks(D1, EmptyBB), 0x8041221400Ull);
-			Assert::AreEqual(bishopAttacks(E4, 0x80000800280000Ull), 0x80402800280000Ull);
-			Assert::AreEqual(bishopAttacks(A1, 0x40200Ull), 0x200Ull);
-			Assert::AreEqual(bishopAttacks(D4, 0x21000140000Ull), 0x21400140000Ull);
+			Assert::AreEqual(Attacks::bishopAttacks(A8, EmptyBB), 0x2040810204080Ull);
+			Assert::AreEqual(Attacks::bishopAttacks(E6, EmptyBB), 0x4428002844820100Ull);
+			Assert::AreEqual(Attacks::bishopAttacks(D1, EmptyBB), 0x8041221400Ull);
+			Assert::AreEqual(Attacks::bishopAttacks(E4, 0x80000800280000Ull), 0x80402800280000Ull);
+			Assert::AreEqual(Attacks::bishopAttacks(A1, 0x40200Ull), 0x200Ull);
+			Assert::AreEqual(Attacks::bishopAttacks(D4, 0x21000140000Ull), 0x21400140000Ull);
 		}
 
 		TEST_METHOD(rookAttacks_Test)
@@ -159,11 +159,11 @@ namespace UnitTests
 			initSquareBB();
 			initAttackTables();
 
-			Assert::AreEqual(rookAttacks(D3, EmptyBB), 0x808080808f70808Ull);
-			Assert::AreEqual(rookAttacks(A1, EmptyBB), 0x1010101010101feUll);
-			Assert::AreEqual(rookAttacks(A1, 0x104Ull), 0x106Ull);
-			Assert::AreEqual(rookAttacks(D3, 0x808000000120000Ull), 0x8080808160808Ull);
-			Assert::AreEqual(rookAttacks(H5, 0x802080000000Ull), 0x806080000000Ull);
+			Assert::AreEqual(Attacks::rookAttacks(D3, EmptyBB), 0x808080808f70808Ull);
+			Assert::AreEqual(Attacks::rookAttacks(A1, EmptyBB), 0x1010101010101feUll);
+			Assert::AreEqual(Attacks::rookAttacks(A1, 0x104Ull), 0x106Ull);
+			Assert::AreEqual(Attacks::rookAttacks(D3, 0x808000000120000Ull), 0x8080808160808Ull);
+			Assert::AreEqual(Attacks::rookAttacks(H5, 0x802080000000Ull), 0x806080000000Ull);
 		}
 
 		TEST_METHOD(queenAttacks_Test)

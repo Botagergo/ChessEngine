@@ -155,7 +155,7 @@ void initObstructedTable()
 		{
 			ObstructedTable[from][to] = 0;
 
-			if ((pseudoRookAttacks((Square)from) | pseudoBishopAttacks((Square)from)) & SquareBB[to])
+			if ((Attacks::pseudoRookAttacks((Square)from) | Attacks::pseudoBishopAttacks((Square)from)) & SquareBB[to])
 			{
 				int delta = (to - from) / std::max(abs(Util::getFile((Square)from) - Util::getFile((Square)to)), 
 					abs(Util::getRank((Square)from) - Util::getRank((Square)to)));

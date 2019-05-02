@@ -216,16 +216,16 @@ Move Move::fromSan(const Board &board, const std::string &san)
 			Bitboard pawns = board.pieces(board.toMove(), PAWN) & Constants::FileBB[charToFile(*match[2].first)];
 			for (Bitboard from : BitboardIterator<Bitboard>(pawns))
 			{
-				if (board.toMove() == WHITE && (pawnSinglePushTargets<WHITE>(from, ~board.occupied()) & Constants::SquareBB[to])
-					|| board.toMove() == BLACK && (pawnSinglePushTargets<BLACK>(from, ~board.occupied()) & Constants::SquareBB[to]))
+				if (board.toMove() == WHITE && (Attacks::pawnSinglePushTargets<WHITE>(from, ~board.occupied()) & Constants::SquareBB[to])
+					|| board.toMove() == BLACK && (Attacks::pawnSinglePushTargets<BLACK>(from, ~board.occupied()) & Constants::SquareBB[to]))
 				{
 					if (match[4].matched)
 						return Move(PAWN, Util::bitScanForward(from), to, charToPieceType(*match[4].first), 0);
 					else
 						return Move(PAWN, Util::bitScanForward(from), to, 0);
 				}
-				else if (board.toMove() == WHITE && (pawnDoublePushTargets<WHITE>(from, ~board.occupied()) & Constants::SquareBB[to])
-					|| board.toMove() == BLACK && (pawnDoublePushTargets<BLACK>(from, ~board.occupied()) & Constants::SquareBB[to]))
+				else if (board.toMove() == WHITE && (Attacks::pawnDoublePushTargets<WHITE>(from, ~board.occupied()) & Constants::SquareBB[to])
+					|| board.toMove() == BLACK && (Attacks::pawnDoublePushTargets<BLACK>(from, ~board.occupied()) & Constants::SquareBB[to]))
 				{
 					return Move(PAWN, Util::bitScanForward(from), to, FLAG_DOUBLE_PUSH);
 				}

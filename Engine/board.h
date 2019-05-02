@@ -100,8 +100,8 @@ Bitboard Board::pinnedPieces() const
 	assert(pieces(color, KING) != 0Ull);
 
 	Square king = Util::bitScanForward(pieces(color, KING));
-	Bitboard pinners = ((pieces(~color, ROOK) | pieces(~color, QUEEN)) & pseudoRookAttacks(king))
-		| ((pieces(~color, BISHOP) | pieces(~color, QUEEN)) & pseudoBishopAttacks(king));
+	Bitboard pinners = ((pieces(~color, ROOK) | pieces(~color, QUEEN)) & Attacks::pseudoRookAttacks(king))
+		| ((pieces(~color, BISHOP) | pieces(~color, QUEEN)) & Attacks::pseudoBishopAttacks(king));
 	Bitboard pinned = 0;
 
 	for (Square pinner : BitboardIterator<Square>(pinners))

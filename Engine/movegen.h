@@ -55,7 +55,7 @@ namespace MoveGen
 					moves[size++] = Move(PAWN, from, to, FLAG_CAPTURE);
 			}
 
-			targets = pawnSinglePushTargets<toMove>(SquareBB[from], ~board.occupied());
+			targets = Attacks::pawnSinglePushTargets<toMove>(SquareBB[from], ~board.occupied());
 			if (quiescence)
 				targets &= Util::backRank<toMove>();
 
@@ -74,7 +74,7 @@ namespace MoveGen
 
 			if (!quiescence)
 			{
-				targets = pawnDoublePushTargets<toMove>(SquareBB[from], ~board.occupied());
+				targets = Attacks::pawnDoublePushTargets<toMove>(SquareBB[from], ~board.occupied());
 				for (Square to : BitboardIterator<Square>(targets))
 				{
 					moves[size++] = Move(PAWN, from, to, FLAG_DOUBLE_PUSH);
@@ -85,7 +85,7 @@ namespace MoveGen
 		if (board.enPassantTarget() != NO_SQUARE)
 		{
 			Square to = board.enPassantTarget();
-			Bitboard ep_pawns = pawnAttacks<~toMove>(SquareBB[board.enPassantTarget()]) & pawns;
+			Bitboard ep_pawns = Attacks::pawnAttacks<~toMove>(SquareBB[board.enPassantTarget()]) & pawns;
 
 			for (Square from : BitboardIterator<Square>(ep_pawns))
 			{

@@ -24,7 +24,7 @@ namespace Evaluation
 	template <Color color>
 	bool isPassedPawn(Square pawn, Bitboard enemy_pawns)
 	{
-		Bitboard enemy_attacks = pawnAttacks<~color>(enemy_pawns);
+		Bitboard enemy_attacks = Attacks::pawnAttacks<~color>(enemy_pawns);
 
 		if (SquareBB[pawn] & enemy_attacks)
 			return false;
@@ -130,8 +130,8 @@ namespace Evaluation
 		king_square[~color] = Util::bitScanForward(board.pieces(~color, KING));
 
 		Bitboard king_proximity[COLOR_NB];
-		king_proximity[color] = kingAttacks(king_square[color]);
-		king_proximity[~color] = kingAttacks(king_square[~color]);
+		king_proximity[color] = Attacks::kingAttacks(king_square[color]);
+		king_proximity[~color] = Attacks::kingAttacks(king_square[~color]);
 
 		int king_attacks_count[COLOR_NB] = { 0 };
 

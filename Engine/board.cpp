@@ -567,14 +567,14 @@ void Board::_updateAttacked()
 
 
 					if (piece_type != PAWN)
-						attacks = pieceAttacks(square, piece_type, occupied());
+						attacks = Attacks::pieceAttacks(square, piece_type, occupied());
 					else
 					{
 						Bitboard pawn = Constants::SquareBB[square];
 						if (occupied(WHITE) & pawn)
-							attacks = pawnAttacks<WHITE>(pawn);
+							attacks = Attacks::pawnAttacks<WHITE>(pawn);
 						else
-							attacks = pawnAttacks<BLACK>(pawn);
+							attacks = Attacks::pawnAttacks<BLACK>(pawn);
 					}
 
 					_attackedByPiece[square] = attacks;
