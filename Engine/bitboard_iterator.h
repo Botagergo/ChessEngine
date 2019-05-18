@@ -24,7 +24,7 @@ public:
 
 		value_type operator*() const
 		{
-			assert(false);
+			ASSERT(false);
 		}
 
 		self_type& operator++()

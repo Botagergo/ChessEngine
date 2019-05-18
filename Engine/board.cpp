@@ -187,7 +187,7 @@ std::string Board::fen() const
 
 	fen << " ";
 
-	assert(_halfmove_clock >= 0 && _fullmove_num > 0);
+	ASSERT(_halfmove_clock >= 0 && _fullmove_num > 0);
 	fen << _halfmove_clock << " " << _fullmove_num;
 
 	return fen.str();
@@ -443,14 +443,14 @@ void Board::_makeNormalMove(Move move)
 
 	if (move.isEnPassant())
 	{
-		assert(_en_passant_capture_target != NO_SQUARE);
+		ASSERT(_en_passant_capture_target != NO_SQUARE);
 		Bitboard ep_ct_bb = Constants::SquareBB[_en_passant_capture_target];
 
 		_pieces[o][PAWN] ^= ep_ct_bb;
 		_material[o][PAWN] -= 1;
 		_piece_list[_en_passant_capture_target] = NO_PIECE;
 
-		assert(_occupied[o] & ep_ct_bb);
+		ASSERT(_occupied[o] & ep_ct_bb);
 		_occupied[o] ^= ep_ct_bb;
 
 		_hash ^= Zobrist::PiecePositionHash[o][PAWN][enPassantCaptureTarget()];
@@ -482,7 +482,7 @@ void Board::_makeNormalMove(Move move)
 
 void Board::_castle(Side side)
 {
-	assert(canCastle(toMove(), side));
+	ASSERT(canCastle(toMove(), side));
 
 	Square k_from = toMove() == WHITE ? E1 : E8;
 	Square k_to = toMove() == WHITE ? (side == KINGSIDE ? G1 : C1) : (side == KINGSIDE ? G8 : C8);

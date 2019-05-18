@@ -4,16 +4,17 @@ namespace Perft
 {
 	struct PerftResult
 	{
-		int nodes;
-		int captures;
-		int king_castles;
-		int queen_castles;
-		int en_passants;
-		int promotions;
+		long long nodes;
+		long long captures;
+		long long king_castles;
+		long long queen_castles;
+		long long en_passants;
+		long long promotions;
 	};
 
 	PerftResult perft(Board board, int depth);
 	std::vector<std::pair<Move, PerftResult> > perftDivided(Board board, int depth);
+	void perft(const std::string &file);
 
-	int _perft(Board &board, int depth, int &captures, int &en_passants, int &king_castles, int &queen_castles, int &promotions);
+	long long _perft(Board &board, long long depth, long long &captures, long long &en_passants, long long &king_castles, long long &queen_castles, long long &promotions);
 }

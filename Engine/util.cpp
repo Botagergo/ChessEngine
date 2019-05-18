@@ -1,6 +1,7 @@
 #include <intrin.h>
 #include <algorithm>
 
+#include "config.h"
 #include "util.h"
 
 #pragma warning (disable : 4146)
@@ -23,7 +24,7 @@ namespace Util
 
 	Square bitScanForward(Bitboard bb)
 	{
-		assert(bb != 0);
+		ASSERT(bb != 0);
 		unsigned long bit;
 #ifdef _M_AMD64
 		_BitScanForward64(&bit, bb);
@@ -42,7 +43,7 @@ namespace Util
 
 	Square bitScanReverse(Bitboard bb)
 	{
-		assert(bb != 0);
+		ASSERT(bb != 0);
 		unsigned long bit;
 #ifdef _M_AMD64
 

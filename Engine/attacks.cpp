@@ -1,4 +1,5 @@
 #include "attacks.h"
+#include "config.h"
 
 #include <iostream>
 
@@ -62,7 +63,7 @@ namespace Attacks
 	
 	Bitboard pieceAttacks(Square square, PieceType piece_type, Bitboard occupied)
 	{
-		assert(piece_type != PAWN);
+		ASSERT(piece_type != PAWN);
 	
 		switch (piece_type)
 		{

@@ -16,8 +16,8 @@ struct EpdData
 	EpdData() {};
 
 	Board board;
-	Move bestMove = Move();
-	Move avoidMove = Move();
+	std::vector<Move> good_moves;
+	std::vector<Move> bad_moves;
 	std::string id = "";
 };
 
@@ -48,7 +48,7 @@ EpdData::EpdData(const std::string &epd)
 	epd_ss.getline(buf, 256);
 
 	std::string opcodes = buf;
-	std::string opcode_regex = "(\\w+) ([^;]*);";
+	std::string opcode_regex = "\\s*(\\w*) ([^;]*);";
 
 	std::smatch opcode_match_result;
 
@@ -58,16 +58,40 @@ EpdData::EpdData(const std::string &epd)
 		std::string parameter = opcode_match_result[2];
 		if (opcode == "bm")
 		{
-			bestMove = Move::fromSan(board, parameter);
-			if (!bestMove.isValid())
+			std::stringstream ss(parameter);
+			std::string move;
+
+			while (ss >> move)
 			{
-				std::stringstream msg;
-				msg << "Invalid move: \"" << parameter << "\"";
-				throw EpdParseError(msg.str().c_str());
+				Move good_move = Move::fromSan(board, move);
+				if (!good_move.isValid())
+				{
+					std::stringstream msg;
+					msg << "Invalid move: \"" << parameter << "\"";
+					throw EpdParseError(msg.str().c_str());
+				}
+				good_moves.push_back(good_move);
 			}
+
 		}
 		else if (opcode == "am")
-			avoidMove = Move::fromSan(board, parameter);
+		{
+			std::stringstream ss(parameter);
+			std::string move;
+
+			while (ss >> move)
+			{
+				Move bad_move = Move::fromSan(board, move);
+				if (!bad_move.isValid())
+				{
+					std::stringstream msg;
+					msg << "Invalid move: \"" << parameter << "\"";
+					throw EpdParseError(msg.str().c_str());
+				}
+				bad_moves.push_back(bad_move);
+			}
+
+		}
 		else if (opcode == "id")
 			id = parameter;
 		else

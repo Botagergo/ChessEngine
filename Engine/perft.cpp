@@ -1,6 +1,8 @@
 #include "board.h"
 #include "movegen.h"
 #include "perft.h"
+
+#include <fstream>
 #include <stack>
 #include <vector>
 
@@ -12,6 +14,45 @@ Perft::PerftResult Perft::perft(Board board, int depth)
 	res.nodes = Perft::_perft(board, depth, res.captures, res.en_passants, res.king_castles, res.queen_castles, res.promotions);
 
 	return res;
+}
+
+void Perft::perft(const std::string &file)
+{
+	std::ifstream in(file);
+	if (!in)
+	{
+		std::cerr << "Error opening file \"" << file << "\"" << std::endl;
+		return;
+	}
+
+	char buf[256];
+	bool success = true;
+
+	while (in.getline(buf, 256))
+	{
+		std::stringstream line(buf), fen;
+		int depth;
+		long long expected;
+
+		for (int i = 0; i < 6; ++i)
+		{
+			std::string part;
+			line >> part;
+			fen << part << " ";
+		}
+
+		line >> depth >> expected;
+
+		PerftResult res = perft(Board::fromFen(fen.str()), depth);
+		if (res.nodes != expected)
+		{
+			std::cerr << "Error: " << fen.str() << std::endl;
+			success = false;
+		}
+	}
+
+	if (success)
+		std::cerr << "Perft ok" << std::endl;
 }
 
 std::vector<std::pair<Move, Perft::PerftResult> > Perft::perftDivided(Board board, int depth)
@@ -36,7 +77,7 @@ std::vector<std::pair<Move, Perft::PerftResult> > Perft::perftDivided(Board boar
 	return res;
 }
 
-int Perft::_perft(Board &board, int depth, int &captures, int &en_passants, int &king_castles, int &queen_castles, int &promotions)
+long long Perft::_perft(Board &board, long long depth, long long &captures, long long &en_passants, long long &king_castles, long long &queen_castles, long long &promotions)
 {
 	if (depth <= 0)
 	{
@@ -46,7 +87,7 @@ int Perft::_perft(Board &board, int depth, int &captures, int &en_passants, int 
 	Move moves[MAX_MOVES];
 	int move_count;
 
-	int score = 0;
+	long long score = 0;
 
 	if (board.toMove() == WHITE)
 		MoveGen::genMoves<WHITE, false>(board, moves, move_count);

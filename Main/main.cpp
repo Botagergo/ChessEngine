@@ -4,6 +4,7 @@
 #include "epd.h"
 #include "perft.h"
 #include "zobrist.h"
+#include "config.h"
 
 #include <iostream>
 #include <fstream>
@@ -21,7 +22,7 @@ void printPerftRes(const Perft::PerftResult &res);
 void runTest(const std::string &in_file, int depth, const std::string &out_file = "");
 
 Board board;
-int maxdepth = 9;
+int maxdepth = 5;
 
 enum Command
 {
@@ -146,27 +147,8 @@ int main(int argc, char *argv[])
 						commands[Command::search_moves].str += std::string(" ", commands[Command::search_moves].str.empty() ? 0 : 1) + token;
 				else if (token == "ponder")
 					Search::searchInfo.ponder = true;
-				else if (token == "wtime")
-					iss >> commands[Command::white_time].number;
-				else if (token == "btime")
-					iss >> commands[Command::black_time].number;
-				else if (token == "winc")
-					iss >> commands[Command::white_increment].number;
-				else if (token == "binc")
-					iss >> commands[Command::black_increment].number;
-				else if (token == "movestogo")
-					iss >> commands[Command::moves_to_go].number;
 				else if (token == "depth")
 					iss >> commands[Command::depth].number;
-				else if (token == "nodes")
-					iss >> commands[Command::nodes].number;
-				else if (token == "mate")
-					iss >> commands[Command::mate].number;
-				else if (token == "move_time")
-					iss >> commands[Command::move_time].number;
-				else if (token == "infinite")
-					commands[Command::infinite];
-
 			Search::startSearch(board, commands[Command::depth].number);
 		}
 		else if (token == "stop")
@@ -227,12 +209,19 @@ int main(int argc, char *argv[])
 
 			perftReceived(board, depth, moves, divided, full);
 		}
+		else if (token == "run_perft")
+		{
+			std::string filename;
+			iss >> filename;
+			Perft::perft(filename);
+		}
 		else if (token == "run_test")
 		{
 			std::string filename;
 			int depth;
 			iss >> filename;
 			iss >> depth;
+
 			runTest(filename, depth);
 		}
 		else
@@ -353,10 +342,9 @@ void runTest(const std::string &in_file, int depth, const std::string &out_file)
 		Search::search(epdData[i].board, depth, &bestMove);
 
 		message << epdData[i].id << "\t:\t";
-		if (epdData[i].avoidMove.isValid() && bestMove == epdData[i].avoidMove)
+		if (std::find(epdData[i].bad_moves.begin(), epdData[i].bad_moves.end(), bestMove) != epdData[i].bad_moves.end() |
+			std::find(epdData[i].good_moves.begin(), epdData[i].good_moves.end(), bestMove) != epdData[i].good_moves.end())
 			message << "incorrect move: " << bestMove.toAlgebraic();
-		else if (epdData[i].bestMove.isValid() && bestMove != epdData[i].bestMove)
-			message << "expected: " << epdData[i].bestMove.toAlgebraic() << ", actual:" << bestMove.toAlgebraic();
 		else
 		{
 			message << "OK";

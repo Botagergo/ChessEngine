@@ -79,7 +79,7 @@ namespace Search
 	template <Color toMove, bool pvNode, bool nullMoveAllowed>
 	int alphaBeta(const Board & board, int alpha, int beta, int depthleft, int ply, std::vector<Move> * pv)
 	{
-		assert(depthleft >= 0);
+		ASSERT(depthleft >= 0);
 
 		++searchInfo.Stats.alpha_beta_nodes;
 
@@ -100,13 +100,13 @@ namespace Search
 		auto hash = searchInfo.transposition_table.probe(board.hash(), depthleft, alpha, beta);
 		if (hash.first == alpha || hash.first == beta)
 		{
-			assert(ply);
+			ASSERT(ply);
 			++searchInfo.Stats.hash_score_returned;
 			return hash.first;
 		}
 		else if (hash.second.isValid())
 		{
-			assert(board.pieceAt(hash.second.from()) != NO_PIECE);
+			ASSERT(board.pieceAt(hash.second.from()) != NO_PIECE);
 			hash_move = hash.second;
 		}
 

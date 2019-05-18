@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <cstdlib>
 
+#include "config.h"
 #include "constants.h"
 #include "types.h"
 
@@ -13,7 +14,7 @@ namespace Util
 	template <Direction dir>
 	Bitboard shift(Bitboard b)
 	{
-		assert(dir != DIRECTION_NB);
+		ASSERT(dir != DIRECTION_NB);
 
 		switch (dir)
 		{
@@ -96,7 +97,7 @@ namespace Util
 		case NORTHWEST:
 			return SOUTHWEST;
 		default:
-			assert(false);
+			ASSERT(false);
 		}
 	}
 

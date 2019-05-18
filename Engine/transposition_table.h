@@ -51,7 +51,7 @@ public:
 
 	std::pair<int, Move> probe(u64 hash, int depth, int alpha, int beta)
 	{
-		assert(hash != 0);
+		ASSERT(hash != 0);
 
 		std::pair<int, Move> pair = std::make_pair(SCORE_INVALID, Move());
 		Entry *entry = _getEntry(hash);
