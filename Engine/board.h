@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "bitboard_iterator.h"
+#include "config.h"
 #include "move.h"
 #include "types.h"
 
@@ -42,6 +43,9 @@ public:
 
 	Bitboard pinnedPieces(Color color) const;
 
+	Bitboard attackers(Square square) const;
+	Bitboard attackers(Color color, Square square) const;
+
 	int phase() const;
 
 	bool canCastle(Color color, Side side) const;
@@ -49,6 +53,7 @@ public:
 	Square enPassantTarget() const;
 	Square enPassantCaptureTarget() const;
 
+	Square kingSquare(Color color) const;
 	bool isInCheck(Color color) const;
 
 	bool allowNullMove() const;
@@ -80,6 +85,7 @@ private:
 	std::array<Bitboard, COLOR_NB> _occupied;
 	std::array<Bitboard, SQUARE_NB> _attackedByPiece;
 	std::array<Bitboard, COLOR_NB> _attackedByColor;
+	std::array<Bitboard, SQUARE_NB> _attackers;
 	std::array<Bitboard, COLOR_NB> _pinned_pieces;
 	int _material[COLOR_NB][PIECE_TYPE_NB];
 	

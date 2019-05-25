@@ -250,6 +250,16 @@ Bitboard Board::pinnedPieces(Color color) const
 	return _pinned_pieces[color];
 }
 
+Bitboard Board::attackers(Square square) const
+{
+	return _attackers[square];
+}
+
+Bitboard Board::attackers(Color color, Square square) const
+{
+	return attackers(square) & occupied(color);
+}
+
 Color Board::toMove() const
 {
 	return _to_move;
@@ -324,6 +334,11 @@ Square Board::enPassantTarget() const
 Square Board::enPassantCaptureTarget() const
 {
 	return _en_passant_capture_target;
+}
+
+Square Board::kingSquare(Color color) const
+{
+	return Util::bitScanForward(pieces(color, KING));
 }
 
 bool Board::isInCheck(Color color) const
@@ -561,6 +576,7 @@ void Board::_updateAttacked()
 {
 	_attackedByColor[WHITE] = _attackedByColor[BLACK] = 0;
 	_attackedByPiece = { 0 };
+	_attackers = { 0 };
 
 	for (Color color : Colors)
 	{
@@ -584,6 +600,11 @@ void Board::_updateAttacked()
 							attacks = Attacks::pawnAttacks<WHITE>(pawn);
 						else
 							attacks = Attacks::pawnAttacks<BLACK>(pawn);
+					}
+
+					for (Square target : BitboardIterator<Square>(attacks))
+					{
+						_attackers[target] |= Constants::SquareBB[square];
 					}
 
 					_attackedByPiece[square] = attacks;
