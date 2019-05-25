@@ -16,6 +16,10 @@ using namespace std;
 
 namespace Search
 {
+	const int RFutility_Depth = 3;
+	const int RFutility_Param = 120;
+	const int IID_Depth = 6;
+	const int IID_Reduction = 4;
 
 	extern std::thread search_thrd;
 
@@ -76,6 +80,11 @@ namespace Search
 
 	bool isRepetition(u64 hash, int ply);
 
+	inline int razorMargin(int depth)
+	{
+		return (90 * (depth - 1) + 18);
+	}
+
 	template <Color toMove, bool pvNode, bool nullMoveAllowed>
 	int alphaBeta(const Board & board, int alpha, int beta, int depthleft, int ply, std::vector<Move> * pv)
 	{
@@ -83,7 +92,7 @@ namespace Search
 
 		++searchInfo.Stats.alpha_beta_nodes;
 
-		if (searchInfo.Stats.alpha_beta_nodes % 10000 == 0)
+		if (searchInfo.sendOutput && searchInfo.Stats.alpha_beta_nodes % 10000 == 0)
 		{
 			sendNodeInfo(searchInfo.NodeCountInfo.node_count, searchInfo.NodeCountInfo.nodes_per_sec);
 			sendHashfull((int)(searchInfo.transposition_table.usage() * 1000));
@@ -113,14 +122,59 @@ namespace Search
 		if (depthleft == 0)
 			return quiescence<toMove>(board, alpha, beta);
 
-		if (nullMoveAllowed && depthleft >= 4 && !board.isInCheck(toMove))
+		int eval = Evaluation::evaluate<toMove>(board);
+
+		// Reverse futility pruning
+		if (!pvNode
+			&& depthleft <= RFutility_Depth
+			&& !board.isInCheck(toMove)
+			&& std::abs(alpha) < SCORE_MIN_MATE && std::abs(beta) < SCORE_MIN_MATE
+			&& eval - RFutility_Param * depthleft >= beta
+			&& board.allowNullMove())
+		{
+			return beta;
+		}
+
+		// Dynamic null move pruning
+		if (nullMoveAllowed
+			&& depthleft >= 4
+			&& !board.isInCheck(toMove)
+			&& board.allowNullMove())
 		{
 			Board board_copy = board;
 			board_copy.makeMove(Move::nullMove());
 
-			int score = -alphaBeta<~toMove, false, false>(board_copy, -beta, -beta + 1, depthleft - 2, ply + 1, nullptr);
+			int score = -alphaBeta<~toMove, false, false>(board_copy, -beta, -beta + 1, depthleft - 3, ply + 1, nullptr);
 			if (score >= beta)
 				return beta;
+		}
+
+		// Razoring
+		if (!board.isInCheck(toMove)
+			&& depthleft <= 3
+			&& !pvNode
+			&& eval + razorMargin(depthleft) <= alpha)
+		{
+			int res = quiescence<toMove>(board, alpha - razorMargin(depthleft), beta - razorMargin(depthleft));
+			if (res + razorMargin(depthleft) <= alpha)
+				depthleft--;
+
+			if (depthleft <= 0)
+				return alpha;
+		}
+
+		// Internal iterative deepening
+		if (depthleft >= IID_Depth && !hash_move.isValid() && pvNode)
+		{
+			Board board_copy = board;
+			alphaBeta<toMove, true, false>(board_copy, alpha, beta, depthleft - IID_Reduction, ply + 1, nullptr);
+			hash_move = searchInfo.transposition_table.probe(board.hash(), 0, alpha, beta).second;
+		}
+
+		// Depth extension
+		if (board.isInCheck(toMove))
+		{
+			depthleft++;
 		}
 
 		int curr_pos = 0;
@@ -174,6 +228,14 @@ SearchEnd:
 
 			++searched_moves;
 			searchInfo.searched_moves_sum++;
+
+			if (score > alpha && score < beta)
+			{
+				if (SCORE_MIN_MATE <= score && score <= SCORE_MAX_MATE)
+					score -= 1;
+				else if (-SCORE_MAX_MATE <= score && score <= -SCORE_MIN_MATE)
+					score += 1;
+			}
 
 			if (score >= beta)
 			{
@@ -251,6 +313,9 @@ SearchEnd:
 		if (stand_pat >= beta)
 			return beta;
 
+		if (stand_pat < alpha - 900)
+			return alpha;
+
 		if (alpha < stand_pat)
 			alpha = stand_pat;
 
@@ -260,6 +325,10 @@ SearchEnd:
 		for (int i = 1; !mg.end(); ++i, mg.next())
 		{
 			assert(!mg.curr().isQuiet());
+
+			// Delta pruning
+			if (!mg.curr().isPromotion() && stand_pat + Evaluation::PieceValue[toPieceType(board.pieceAt(mg.curr().to()))].mg + 200 < alpha)
+				continue;
 
 			Board board_copy = board;
 			if (!board_copy.makeMove(mg.curr()))
