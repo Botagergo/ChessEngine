@@ -122,6 +122,8 @@ Board Board::fromFen(const std::string &fen)
 	board._initPieceList();
 	board._initMaterial();
 	board._updateAttacked();
+	board._pinned_pieces[WHITE] = board._pinnedPieces<WHITE>();
+	board._pinned_pieces[BLACK] = board._pinnedPieces<BLACK>();
 
 	board._hash = Zobrist::getBoardHash(board);
 
@@ -243,6 +245,11 @@ Bitboard Board::attacked(Square square) const
 	return _attackedByPiece[square];
 }
 
+Bitboard Board::pinnedPieces(Color color) const
+{
+	return _pinned_pieces[color];
+}
+
 Color Board::toMove() const
 {
 	return _to_move;
@@ -259,6 +266,8 @@ bool Board::makeMove(Move move)
 
 		_updateCastlingRights(move);
 		_updateAttacked();
+		_pinned_pieces[WHITE] = _pinnedPieces<WHITE>();
+		_pinned_pieces[BLACK] = _pinnedPieces<BLACK>();
 	}
 	else if (_en_passant_target != NO_SQUARE)
 	{

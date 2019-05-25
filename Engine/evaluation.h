@@ -164,8 +164,8 @@ namespace Evaluation
 			}
 		}
 
-		int our_pinned_score = 10 * Util::popCount(board.pinnedPieces<color>());
-		int their_pinned_score = 10 * Util::popCount(board.pinnedPieces<~color>());
+		int our_pinned_score = 10 * Util::popCount(board.pinnedPieces(color));
+		int their_pinned_score = 10 * Util::popCount(board.pinnedPieces(color));
 
 		score -= Score(our_pinned_score, our_pinned_score);
 		score += Score(their_pinned_score, their_pinned_score);

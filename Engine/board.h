@@ -40,8 +40,7 @@ public:
 	Bitboard attacked(Color color) const;
 	Bitboard attacked(Square square) const;
 
-	template <Color color>
-	Bitboard pinnedPieces() const;
+	Bitboard pinnedPieces(Color color) const;
 
 	int phase() const;
 
@@ -71,6 +70,9 @@ private:
 	void _updateCastlingRights(Move move);
 	void _makeNormalMove(Move move);
 
+	template <Color color>
+	Bitboard _pinnedPieces() const;
+
 	Color _to_move;
 
 	std::array<std::array<Bitboard, PIECE_TYPE_NB>, COLOR_NB> _pieces;
@@ -78,6 +80,7 @@ private:
 	std::array<Bitboard, COLOR_NB> _occupied;
 	std::array<Bitboard, SQUARE_NB> _attackedByPiece;
 	std::array<Bitboard, COLOR_NB> _attackedByColor;
+	std::array<Bitboard, COLOR_NB> _pinned_pieces;
 	int _material[COLOR_NB][PIECE_TYPE_NB];
 	
 	Square _en_passant_target;
@@ -95,18 +98,18 @@ private:
 };
 
 template <Color color>
-Bitboard Board::pinnedPieces() const
+Bitboard Board::_pinnedPieces() const
 {
 	assert(pieces(color, KING) != 0Ull);
 
-	Square king = Util::bitScanForward(pieces(color, KING));
-	Bitboard pinners = ((pieces(~color, ROOK) | pieces(~color, QUEEN)) & Attacks::pseudoRookAttacks(king))
-		| ((pieces(~color, BISHOP) | pieces(~color, QUEEN)) & Attacks::pseudoBishopAttacks(king));
+	Square king_square = Util::bitScanForward(pieces(color, KING));
+	Bitboard pinners = ((pieces(~color, ROOK) | pieces(~color, QUEEN)) & Attacks::pseudoRookAttacks(king_square))
+		| ((pieces(~color, BISHOP) | pieces(~color, QUEEN)) & Attacks::pseudoBishopAttacks(king_square));
 	Bitboard pinned = 0;
 
 	for (Square pinner : BitboardIterator<Square>(pinners))
 	{
-		Bitboard b = ObstructedTable[pinner][king] & occupied();
+		Bitboard b = ObstructedTable[pinner][king_square] & occupied();
 
 		if ((b != 0)							// Van a pinner és a király között figura
 			&& (b & (b - 1)) == 0				// Csak egy figura van a pinner és a király között
