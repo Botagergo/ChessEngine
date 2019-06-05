@@ -16,25 +16,6 @@ using namespace Constants;
 namespace MoveGen
 {
 	template <Color toMove, bool quiescence>
-	void genMoves(const Board & board, Move *moves, int &size)
-	{
-		size = 0;
-
-		genPawnMoves<toMove, quiescence>(board, moves, size);
-		genPieceMoves<KNIGHT, toMove, quiescence>(board, moves, size);
-		genPieceMoves<BISHOP, toMove, quiescence>(board, moves, size);
-		genPieceMoves<ROOK, toMove, quiescence>(board, moves, size);
-		genPieceMoves<QUEEN, toMove, quiescence>(board, moves, size);
-		genPieceMoves<KING, toMove, quiescence>(board, moves, size);
-
-		if (!quiescence)
-		{
-			genCastle<toMove, KINGSIDE>(board, moves, size);
-			genCastle<toMove, QUEENSIDE>(board, moves, size);
-		}
-	}
-
-	template <Color toMove, bool quiescence>
 	void genPawnMoves(const Board &board, Move *moves, int &size)
 	{
 		Bitboard pawns = board.pieces(toMove, PAWN);
@@ -137,6 +118,25 @@ namespace MoveGen
 			&& !(board.occupied() & CantBeOccupied))
 		{
 			moves[size++] = Move::castle(toMove, side);
+		}
+	}
+
+	template <Color toMove, bool quiescence>
+	void genMoves(const Board& board, Move* moves, int& size)
+	{
+		size = 0;
+
+		genPawnMoves<toMove, quiescence>(board, moves, size);
+		genPieceMoves<KNIGHT, toMove, quiescence>(board, moves, size);
+		genPieceMoves<BISHOP, toMove, quiescence>(board, moves, size);
+		genPieceMoves<ROOK, toMove, quiescence>(board, moves, size);
+		genPieceMoves<QUEEN, toMove, quiescence>(board, moves, size);
+		genPieceMoves<KING, toMove, quiescence>(board, moves, size);
+
+		if (!quiescence)
+		{
+			genCastle<toMove, KINGSIDE>(board, moves, size);
+			genCastle<toMove, QUEENSIDE>(board, moves, size);
 		}
 	}
 }

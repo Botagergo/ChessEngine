@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "attack_tables.h"
 #include "bitboard_iterator.h"
 #include "config.h"
 #include "move.h"
@@ -42,9 +43,6 @@ public:
 	Bitboard attacked(Square square) const;
 
 	Bitboard pinnedPieces(Color color) const;
-
-	Bitboard attackers(Square square) const;
-	Bitboard attackers(Color color, Square square) const;
 
 	int phase() const;
 
@@ -85,7 +83,6 @@ private:
 	std::array<Bitboard, COLOR_NB> _occupied;
 	std::array<Bitboard, SQUARE_NB> _attackedByPiece;
 	std::array<Bitboard, COLOR_NB> _attackedByColor;
-	std::array<Bitboard, SQUARE_NB> _attackers;
 	std::array<Bitboard, COLOR_NB> _pinned_pieces;
 	int _material[COLOR_NB][PIECE_TYPE_NB];
 	

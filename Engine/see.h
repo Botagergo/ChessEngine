@@ -17,7 +17,7 @@ int see(const Board & board, Move move)
 
 	Square attacker[2];
 	Bitboard occupied[2];
-	occupied[toMove] = board.occupied(toMove) ^ SquareBB[move.from()];
+	occupied[toMove] = board.occupied(toMove) ^ Constants::SquareBB[move.from()];
 	occupied[~toMove] = board.occupied(~toMove);
 
 	std::vector<int> scores;
@@ -36,7 +36,7 @@ int see(const Board & board, Move move)
 
 		scores.push_back(scores[i - 1] - Evaluation::PieceValue[curr_piece].mg);
 		attacker[~color] = _getLeastValuableAttacker(board, ~color, attackers_bb[~color]);
-		occupied[~color] ^= SquareBB[attacker[~color]];
+		occupied[~color] ^= Constants::SquareBB[attacker[~color]];
 
 		attackers_bb[color] = _getAttackers(board, color, occupied[color] | occupied[~color], move.to()) & occupied[color];
 		if (!attackers_bb[color])
@@ -44,7 +44,7 @@ int see(const Board & board, Move move)
 
 		scores.push_back(scores[i] + Evaluation::PieceValue[toPieceType(board.pieceAt(attacker[~color]))].mg);
 		attacker[color] = _getLeastValuableAttacker(board, color, attackers_bb[color]);
-		occupied[color] ^= SquareBB[attacker[color]];
+		occupied[color] ^= Constants::SquareBB[attacker[color]];
 
 		curr_piece = toPieceType(board.pieceAt(attacker[color]));
 	}

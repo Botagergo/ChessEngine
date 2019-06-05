@@ -26,11 +26,11 @@ namespace Evaluation
 	{
 		Bitboard enemy_attacks = Attacks::pawnAttacks<~color>(enemy_pawns);
 
-		if (SquareBB[pawn] & enemy_attacks)
+		if (Constants::SquareBB[pawn] & enemy_attacks)
 			return false;
 
 		File pawn_file = Util::getFile(pawn);
-		Bitboard attacks_on_file = (enemy_attacks | enemy_pawns | SquareBB[pawn]) & FileBB[pawn_file];
+		Bitboard attacks_on_file = (enemy_attacks | enemy_pawns | Constants::SquareBB[pawn]) & Constants::FileBB[pawn_file];
 
 		if (color == WHITE)
 			return Util::bitScanReverse(attacks_on_file) == pawn;
@@ -48,7 +48,7 @@ namespace Evaluation
 
 		for (File file = A_FILE; file < FILE_NB; ++file)
 		{
-			Bitboard pawns = board.pieces(color, PAWN) & FileBB[file];
+			Bitboard pawns = board.pieces(color, PAWN) & Constants::FileBB[file];
 
 			if (!pawns)
 				continue;
@@ -56,7 +56,7 @@ namespace Evaluation
 			if (isIsolated(file, board.pieces(color, PAWN)))
 				score += IsolatedPawn[file];
 
-			if (Util::popCount(FileBB[file] & pawns) >= 2)
+			if (Util::popCount(Constants::FileBB[file] & pawns) >= 2)
 				score += DoubledPawn[file];
 
 			for (Square pawn : BitboardIterator<Square>(pawns))

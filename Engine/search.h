@@ -85,6 +85,61 @@ namespace Search
 		return (90 * (depth - 1) + 18);
 	}
 
+	template <Color toMove>
+	int quiescence(const Board& board, int alpha, int beta)
+	{
+		++searchInfo.Stats.quiescence_nodes;
+
+		int stand_pat = searchInfo.evaluation_table.probe(board.hash(), alpha, beta);
+		if (stand_pat != SCORE_INVALID)
+		{
+			stand_pat = Evaluation::evaluate<toMove>(board);
+			searchInfo.evaluation_table.insert(board.hash(), stand_pat, EXACT);
+		}
+
+		if (stand_pat >= beta)
+			return beta;
+
+		if (stand_pat < alpha - 1000)
+			return alpha;
+
+		if (alpha < stand_pat)
+			alpha = stand_pat;
+
+		int alpha_orig = alpha;
+
+		MoveSelect::MoveSelector<toMove, true> mg(board, Move());
+		for (int i = 1; !mg.end(); ++i, mg.next())
+		{
+			assert(!mg.curr().isQuiet());
+
+			// Delta pruning
+			if (!mg.curr().isPromotion() && stand_pat + Evaluation::PieceValue[toPieceType(board.pieceAt(mg.curr().to()))].mg + 200 < alpha)
+				continue;
+
+			Board board_copy = board;
+			if (!board_copy.makeMove(mg.curr()))
+				continue;
+
+			int score = -quiescence<~toMove>(board_copy, -beta, -alpha);
+			if (score >= beta)
+			{
+				++searchInfo.Stats.quiescence_cutoffs;
+				searchInfo.evaluation_table.insert(board.hash(), score, LOWER_BOUND);
+				return beta;
+			}
+			if (score > alpha)
+				alpha = score;
+		}
+
+		if (alpha > alpha_orig)
+			searchInfo.evaluation_table.insert(board.hash(), alpha, EXACT);
+		else
+			searchInfo.evaluation_table.insert(board.hash(), alpha, UPPER_BOUND);
+
+		return alpha;
+	}
+
 	template <Color toMove, bool pvNode, bool nullMoveAllowed>
 	int alphaBeta(const Board & board, int alpha, int beta, int depthleft, int ply, std::vector<Move> * pv)
 	{
@@ -163,13 +218,13 @@ namespace Search
 				return alpha;
 		}
 
-		// Internal iterative deepening
-		if (depthleft >= IID_Depth && !hash_move.isValid() && pvNode)
-		{
-			Board board_copy = board;
-			alphaBeta<toMove, true, false>(board_copy, alpha, beta, depthleft - IID_Reduction, ply + 1, nullptr);
-			hash_move = searchInfo.transposition_table.probe(board.hash(), 0, alpha, beta).second;
-		}
+		//// Internal iterative deepening
+		//if (depthleft >= IID_Depth && !hash_move.isValid() && pvNode)
+		//{
+		//	Board board_copy = board;
+		//	alphaBeta<toMove, true, false>(board_copy, alpha, beta, depthleft - IID_Reduction, ply + 1, nullptr);
+		//	hash_move = searchInfo.transposition_table.probe(board.hash(), 0, alpha, beta).second;
+		//}
 
 		// Depth extension
 		if (board.isInCheck(toMove))
@@ -294,61 +349,6 @@ SearchEnd:
 			assert((*pv)[0] != Move());
 			searchInfo.transposition_table.insert(board.hash(), depthleft, alpha, (*pv)[0], EXACT);
 		}
-
-		return alpha;
-	}
-
-	template <Color toMove>
-	int quiescence(const Board & board, int alpha, int beta)
-	{
-		++searchInfo.Stats.quiescence_nodes;
-
-		int stand_pat = searchInfo.evaluation_table.probe(board.hash(), alpha, beta);
-		if (stand_pat != SCORE_INVALID)
-		{
-			stand_pat = Evaluation::evaluate<toMove>(board);
-			searchInfo.evaluation_table.insert(board.hash(), stand_pat, EXACT);
-		}
-
-		if (stand_pat >= beta)
-			return beta;
-
-		if (stand_pat < alpha - 900)
-			return alpha;
-
-		if (alpha < stand_pat)
-			alpha = stand_pat;
-
-		int alpha_orig = alpha;
-
-		MoveSelect::MoveSelector<toMove, true> mg(board, Move());
-		for (int i = 1; !mg.end(); ++i, mg.next())
-		{
-			assert(!mg.curr().isQuiet());
-
-			// Delta pruning
-			if (!mg.curr().isPromotion() && stand_pat + Evaluation::PieceValue[toPieceType(board.pieceAt(mg.curr().to()))].mg + 200 < alpha)
-				continue;
-
-			Board board_copy = board;
-			if (!board_copy.makeMove(mg.curr()))
-				continue;
-
-			int score = -quiescence<~toMove>(board_copy, -beta, -alpha);
-			if (score >= beta)
-			{
-				++searchInfo.Stats.quiescence_cutoffs;
-				searchInfo.evaluation_table.insert(board.hash(), score, LOWER_BOUND);
-				return beta;
-			}
-			if (score > alpha)
-				alpha = score;
-		}
-
-		if (alpha > alpha_orig)
-			searchInfo.evaluation_table.insert(board.hash(), alpha, EXACT);
-		else
-			searchInfo.evaluation_table.insert(board.hash(), alpha, UPPER_BOUND);
 
 		return alpha;
 	}
