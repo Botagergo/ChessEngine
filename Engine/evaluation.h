@@ -123,6 +123,9 @@ namespace Evaluation
 	template <Color color>
 	int evaluate(const Board & board)
 	{
+		if (board.isDraw())
+			return 0;
+
 		Score score;
 
 		Square king_square[COLOR_NB];
@@ -165,7 +168,7 @@ namespace Evaluation
 		}
 
 		int our_pinned_score = 10 * Util::popCount(board.pinnedPieces(color));
-		int their_pinned_score = 10 * Util::popCount(board.pinnedPieces(color));
+		int their_pinned_score = 10 * Util::popCount(board.pinnedPieces(~color));
 
 		score -= Score(our_pinned_score, our_pinned_score);
 		score += Score(their_pinned_score, their_pinned_score);

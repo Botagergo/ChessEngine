@@ -50,6 +50,8 @@ public:
 
 	int phase() const;
 
+	bool isDraw() const;
+
 	bool canCastle(Color color, Side side) const;
 
 	Square enPassantTarget() const;

@@ -325,6 +325,31 @@ int Board::phase() const
 	return (ret * 256 + (total / 2)) / total;
 }
 
+// TODO
+bool Board::isDraw() const
+{
+	if (material() > 3000)
+		return false;
+
+	if (numOfPieces(QUEEN) +
+		numOfPieces(ROOK) +
+		numOfPieces(PAWN) > 0)
+		return false;
+
+	if (numOfPieces(WHITE, KNIGHT) + numOfPieces(WHITE, BISHOP) > 0
+		&& numOfPieces(BLACK, KNIGHT) + numOfPieces(BLACK, BISHOP) > 0)
+		return true;
+
+	for (Color color = WHITE; color < COLOR_NB; ++color)
+	{
+		Color o = ~color;
+		if (numOfPieces(color, KNIGHT) >= 2 || numOfPieces(color, BISHOP) >= 2)
+			return false;
+	}
+
+	return true;
+}
+
 bool Board::canCastle(Color color, Side side) const
 {
 	return _castling_rights & CastleFlag[color][side];
