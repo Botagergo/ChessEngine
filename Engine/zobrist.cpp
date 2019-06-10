@@ -17,7 +17,7 @@ namespace Zobrist
 
 		std::uniform_int_distribution<u64> dist;
 
-		for (PieceType piece_type : PieceTypes)
+		for (PieceType piece_type = PAWN; piece_type < PIECE_TYPE_NB; ++piece_type)
 		{
 			for (Square square : Squares)
 			{
@@ -31,7 +31,7 @@ namespace Zobrist
 		u64 castling_rights_hash[COLOR_NB][SIDE_NB];
 		for (Color color : Colors)
 		{
-			for (Side side : Sides)
+			for (Side side = KINGSIDE; side < SIDE_NB; ++side)
 			{
 				castling_rights_hash[color][side] = dist(e2);
 			}
@@ -41,7 +41,7 @@ namespace Zobrist
 		{
 			for (Color color : Colors)
 			{
-				for (Side side : Sides)
+				for (Side side = KINGSIDE; side < SIDE_NB; ++side)
 				{
 					if (i & Board::CastleFlag[color][side])
 					{
@@ -51,7 +51,7 @@ namespace Zobrist
 			}
 		}
 
-		for (File file : Files)
+		for (File file = A_FILE; file < FILE_NB; ++file)
 		{
 			EnPassantFileHash[file] = dist(e2);
 		}
@@ -66,7 +66,7 @@ namespace Zobrist
 
 		for (Color color : Colors)
 		{
-			for (PieceType piece_type : PieceTypes)
+			for (PieceType piece_type = PAWN; piece_type < PIECE_TYPE_NB; ++piece_type)
 			{
 				for (Square square : BitboardIterator<Square>(board.pieces(color, piece_type)))
 				{

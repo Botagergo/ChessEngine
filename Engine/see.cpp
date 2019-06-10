@@ -22,7 +22,7 @@ Bitboard _getAttackers(const Board & board, Color to_move, Bitboard occupied, Sq
 
 Square _getLeastValuableAttacker(const Board & board, Color to_move, Bitboard attackers)
 {
-	for (PieceType piece_type : PieceTypes)
+	for (PieceType piece_type = PAWN; piece_type < PIECE_TYPE_NB; ++piece_type)
 	{
 		Bitboard pieces = board.pieces(to_move, piece_type) & attackers;
 		if (pieces)

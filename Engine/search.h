@@ -12,8 +12,6 @@
 #include "transposition_table.h"
 #include "types.h"
 
-using namespace std;
-
 namespace Search
 {
 	const int RFutility_Depth = 3;

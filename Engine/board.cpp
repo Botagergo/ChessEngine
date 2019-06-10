@@ -4,6 +4,7 @@
 #include "bitboard_iterator.h"
 #include "board.h"
 #include "constants.h"
+#include "evaluation.h"
 #include "util.h"
 #include "zobrist.h"
 
@@ -118,9 +119,7 @@ Board Board::fromFen(const std::string &fen)
 	ss = std::stringstream(match_result[13]);
 	ss >> board._fullmove_num;
 
-	board._initOccupied();
-	board._initPieceList();
-	board._initMaterial();
+	board._init();
 	board._updateAttacked();
 	board._pinned_pieces[WHITE] = board._pinnedPieces<WHITE>();
 	board._pinned_pieces[BLACK] = board._pinnedPieces<BLACK>();
@@ -220,9 +219,24 @@ Piece Board::pieceAt(Square square) const
 	return _piece_list[square];
 }
 
-int Board::material(Color color, PieceType piece_type) const 
+int Board::material(Color color) const 
 {
-	return _material[color][piece_type];
+	return _material[color];
+}
+
+int Board::material() const
+{
+	return material(WHITE) + material(BLACK);
+}
+
+int Board::numOfPieces(Color color, PieceType piece_type) const
+{
+	return _num_of_pieces[color][piece_type];
+}
+
+int Board::numOfPieces(PieceType piece_type) const
+{
+	return numOfPieces(WHITE, piece_type) + numOfPieces(BLACK, piece_type);
 }
 
 Bitboard Board::occupied(Color color) const
@@ -304,8 +318,8 @@ int Board::phase() const
 
 	for (PieceType piece_type = PAWN; piece_type < KING; ++piece_type)
 	{
-		ret -= _material[WHITE][piece_type] * PHASE[piece_type];
-		ret -= _material[BLACK][piece_type] * PHASE[piece_type];
+		ret -= numOfPieces(WHITE, piece_type) * PHASE[piece_type];
+		ret -= numOfPieces(BLACK, piece_type) * PHASE[piece_type];
 	}
 
 	return (ret * 256 + (total / 2)) / total;
@@ -339,8 +353,8 @@ bool Board::isInCheck(Color color) const
 bool Board::allowNullMove() const
 {
 	// Ha kevés figura van a táblán, akkor zugzwang miatt kockácatos a null move engedélyezése
-	return material(toMove(), KNIGHT) + material(toMove(), BISHOP)
-		+ material(toMove(), ROOK) + material(toMove(), QUEEN) >= 3;
+	return numOfPieces(toMove(), KNIGHT) + numOfPieces(toMove(), BISHOP)
+		+ numOfPieces(toMove(), ROOK) + numOfPieces(toMove(), QUEEN) >= 3;
 }
 
 int Board::halfmoveClock() const
@@ -363,12 +377,13 @@ Board Board::flip() const
 
 	for (PieceType piece_type = PAWN; piece_type < PIECE_TYPE_NB; ++piece_type)
 	{
+		std::swap(board._num_of_pieces[WHITE][piece_type], board._num_of_pieces[BLACK][piece_type]);
 		std::swap(board._pieces[WHITE][piece_type], board._pieces[BLACK][piece_type]);
-		std::swap(board._material[WHITE][piece_type], board._material[BLACK][piece_type]);
 		board._pieces[WHITE][piece_type] = Util::verticalFlip(board._pieces[WHITE][piece_type]);
 		board._pieces[BLACK][piece_type] = Util::verticalFlip(board._pieces[BLACK][piece_type]);
-
 	}
+
+	std::swap(board._material[WHITE], board._material[BLACK]);
 
 	std::swap(board._occupied[WHITE], board._occupied[BLACK]);
 	board._occupied[WHITE] = Util::verticalFlip(board._occupied[WHITE]);
@@ -382,14 +397,14 @@ Board Board::flip() const
 
 	unsigned char new_cr = 0;
 	for (Color color : Colors)
-		for (Side side : Sides)
+		for (Side side = KINGSIDE; side < SIDE_NB; ++side)
 			if (board.canCastle(color, side))
 				new_cr |= CastleFlag[~color][side];
 	board._castling_rights = new_cr;
 
 	board._to_move = ~board._to_move;
 
-	board._initPieceList();
+	board._init();
 	board._updateAttacked();
 
 	board._hash = Zobrist::getBoardHash(board);
@@ -435,8 +450,10 @@ void Board::_makeNormalMove(Move move)
 	if (move.isPromotion())
 	{
 		_pieces[toMove()][move.promotion()] |= b_to;
-		_material[toMove()][move.promotion()] += 1;
-		_material[toMove()][move.pieceType()] -= 1;
+		_num_of_pieces[toMove()][move.promotion()]++;
+		_num_of_pieces[toMove()][move.pieceType()]--;
+		_material[toMove()] += Evaluation::PieceValue[move.promotion()].mg;
+		_material[toMove()] -= Evaluation::PieceValue[move.pieceType()].mg;
 		_hash ^= Zobrist::PiecePositionHash[toMove()][move.promotion()][move.to()];
 	}
 	else
@@ -448,7 +465,8 @@ void Board::_makeNormalMove(Move move)
 	if (piece != NO_PIECE)
 	{
 		_pieces[o][toPieceType(piece)] ^= b_to;
-		_material[o][toPieceType(piece)] -= 1;
+		_num_of_pieces[o][toPieceType(piece)]--;
+		_material[o] -= Evaluation::PieceValue[toPieceType(piece)].mg;
 		_occupied[o] ^= b_to;
 		_hash ^= Zobrist::PiecePositionHash[o][toPieceType(piece)][move.to()];
 	}
@@ -461,7 +479,8 @@ void Board::_makeNormalMove(Move move)
 		Bitboard ep_ct_bb = Constants::SquareBB[_en_passant_capture_target];
 
 		_pieces[o][PAWN] ^= ep_ct_bb;
-		_material[o][PAWN] -= 1;
+		_num_of_pieces[o][PAWN]--;
+		_material[o] -= Evaluation::PieceValue[PAWN].mg;
 		_piece_list[_en_passant_capture_target] = NO_PIECE;
 
 		ASSERT(_occupied[o] & ep_ct_bb);
@@ -532,44 +551,40 @@ void Board::_castle(Side side)
 	}
 }
 
-void Board::_initOccupied()
+void Board::_init()
 {
 	_occupied[WHITE] = _occupied[BLACK] = 0;
-	for (PieceType piece_type : PieceTypes)
+	for (PieceType piece_type = PAWN; piece_type < PIECE_TYPE_NB; ++piece_type)
 	{
 		_occupied[WHITE] |= _pieces[WHITE][piece_type];
 		_occupied[BLACK] |= _pieces[BLACK][piece_type];
 	}
-}
 
-void Board::_initPieceList()
-{
 	std::fill(_piece_list.begin(), _piece_list.end(), NO_PIECE);
 	for(Color color : Colors)
-	for (PieceType piece_type : PieceTypes)
+	for (PieceType piece_type = PAWN; piece_type < PIECE_TYPE_NB; ++piece_type)
 		for (Square square : BitboardIterator<Square>(_pieces[color][piece_type]))
 		{
 			_piece_list[square] = toPiece(piece_type, color);
 		}
-}
 
-void Board::_initMaterial()
-{
 	for (Color color : Colors)
-		for (PieceType piece_type : PieceTypes)
+		for (PieceType piece_type = PAWN; piece_type < PIECE_TYPE_NB; ++piece_type)
 		{
-			_material[color][piece_type] = Util::popCount(pieces(color, piece_type));
+			_num_of_pieces[color][piece_type] = Util::popCount(pieces(color, piece_type));
+			_material[color] = Util::popCount(pieces(color, piece_type)) * Evaluation::PieceValue[piece_type].mg;
 		}
 }
+
 
 void Board::_updateAttacked()
 {
 	_attackedByColor[WHITE] = _attackedByColor[BLACK] = 0;
 	_attackedByPiece = { 0 };
 
-	for (Color color : Colors)
+	for (Color color = WHITE; color < COLOR_NB; ++color)
 	{
-		for (PieceType piece_type : PieceTypes)
+		for (PieceType piece_type = PAWN; piece_type < PIECE_TYPE_NB; ++piece_type)
 		{
 			for (Square square : BitboardIterator<Square>(pieces(color, piece_type)))
 			{
@@ -579,24 +594,19 @@ void Board::_updateAttacked()
 					Bitboard attacks = 0;
 					PieceType piece_type = toPieceType(piece);
 
-
 					if (piece_type != PAWN)
 						attacks = Attacks::pieceAttacks(square, piece_type, occupied());
 					else
 					{
 						Bitboard pawn = Constants::SquareBB[square];
-						if (occupied(WHITE) & pawn)
+						if (color == WHITE)
 							attacks = Attacks::pawnAttacks<WHITE>(pawn);
 						else
 							attacks = Attacks::pawnAttacks<BLACK>(pawn);
 					}
 
 					_attackedByPiece[square] = attacks;
-
-					if (Constants::SquareBB[square] & occupied(WHITE))
-						_attackedByColor[WHITE] |= attacks;
-					else
-						_attackedByColor[BLACK] |= attacks;
+					_attackedByColor[color] |= attacks;
 				}
 			}
 		}

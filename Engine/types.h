@@ -64,9 +64,6 @@ Rank charToRank(char r);
 
 Color pieceColor(Piece piece);
 
-const PieceType PieceTypes[] = { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
-const PieceType MinorMajorPieces[] = { KNIGHT, BISHOP, ROOK, QUEEN };
-
 enum Square {
 	NO_SQUARE = -1,
 	A1, B1, C1, D1, E1, F1, G1, H1,
@@ -91,23 +88,15 @@ const Square Squares [] = {
 	A8, B8, C8, D8, E8, F8, G8, H8,
 };
 
-const Side Sides[] = {
-	KINGSIDE, QUEENSIDE
-};
-
-const File Files[] = {
-	A_FILE, B_FILE, C_FILE, D_FILE, E_FILE, F_FILE, G_FILE, H_FILE
-};
-
 Square parseSquare(const std::string &s);
 
 Piece operator++(Piece &piece);
 PieceType operator++(PieceType &piece);
-
 Square operator++(Square &square);
-
+Side operator++(Side& square);
 File operator++(File &file);
 Rank operator++(Rank &rank);
+Color operator++(Color &color);
 
 struct Score
 {

@@ -140,6 +140,12 @@ Square operator++(Square &square)
 	return square;
 }
 
+Side operator++(Side& side)
+{
+	side = static_cast<Side>(static_cast<int>(side) + 1);
+	return side;
+}
+
 File operator++(File &file)
 {
 	file = static_cast<File>(static_cast<int>(file) + 1);
@@ -152,6 +158,12 @@ Rank operator++(Rank &rank)
 	return rank;
 }
 
+Color operator++(Color &color)
+{
+	color = static_cast<Color>(static_cast<int>(color) + 1);
+	return color;
+}
+
 Score operator*(double d, const Score &score)
 {
 	return Score((int)(score.mg * d), (int)(score.eg * d));
@@ -161,4 +173,3 @@ Score operator*(const Score &score, double d)
 {
 	return Score((int)(score.mg * d), (int)(score.eg * d));
 }
-

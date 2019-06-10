@@ -34,7 +34,11 @@ public:
 	Bitboard pieces(Color color, PieceType piece) const;
 	Piece pieceAt(Square square) const;
 
-	int material(Color color, PieceType piece_type) const;
+	int material(Color color) const;
+	int material() const;
+	
+	int numOfPieces(Color color, PieceType piece_type) const;
+	int numOfPieces(PieceType piece_type) const;
 
 	Bitboard occupied(Color color) const;
 	Bitboard occupied() const;
@@ -84,7 +88,8 @@ private:
 	std::array<Bitboard, SQUARE_NB> _attackedByPiece;
 	std::array<Bitboard, COLOR_NB> _attackedByColor;
 	std::array<Bitboard, COLOR_NB> _pinned_pieces;
-	int _material[COLOR_NB][PIECE_TYPE_NB];
+	std::array<int, COLOR_NB> _material;
+	std::array<std::array<int, PIECE_TYPE_NB>, COLOR_NB> _num_of_pieces;
 	
 	Square _en_passant_target;
 	Square _en_passant_capture_target;
@@ -94,9 +99,7 @@ private:
 
 	u64 _hash;
 
-	void _initOccupied();
-	void _initPieceList();
-	void _initMaterial();
+	void _init();
 	void _updateAttacked();
 };
 
