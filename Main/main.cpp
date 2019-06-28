@@ -5,60 +5,45 @@
 #include "perft.h"
 #include "zobrist.h"
 #include "config.h"
+#include "search.h"
+#include "search_event_handler.h"
 
 #include <iostream>
 #include <fstream>
 #include <map>
-#include <search.h>
+#include <stdio.h>
 
 using namespace std;
 
 const std::string start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-void setoptionReceived(std::string name, std::string value);
+void setoptionReceived(Search::Search& search, std::string name, std::string value);
 void perftReceived(Board board, int depth, std::vector<Move> moves, bool per_move, bool full);
 void printPerftRes(const Perft::PerftResult &res);
 
 void runTest(const std::string &in_file, int depth, const std::string &out_file = "");
 
-Board board;
-int maxdepth = 5;
-
-enum Command
-{
-	search_moves,
-	ponder,
-	white_time,
-	black_time,
-	white_increment,
-	black_increment,
-	moves_to_go,
-	depth,
-	nodes,
-	mate,
-	move_time,
-	infinite
-};
-
-struct CommandParam
-{
-	std::string str = "";
-	int number = 0;
-
-};
-
 int main(int argc, char *argv[])
 {
+	Search::Search search;
+
 	initSquareBB();
 	initAttackTables();
 	initObstructedTable();
 	Zobrist::initZobristHashing();
 	initDistanceTable();
 
+	Board board;
+	bool debug = false;
+
+	std::ofstream log("log.txt");
+
 	std::string line;
 	auto   running = true;
 	while (running && getline(std::cin, line))
 	{
+		log << line << std::endl;
+
 		std::istringstream iss(line);
 		std::string        token;
 		iss >> std::skipws >> token;
@@ -66,16 +51,12 @@ int main(int argc, char *argv[])
 		{
 			std::cout << "option name Hash type spin min 2 max 4096 default 32" << std::endl;
 			std::cout << "option name Ponder" << std::endl;
-			std::cout << "option name maxdepth type string default 6" << std::endl;
 			std::cout << "uciok" << std::endl;
 		}
 		else if (token == "debug")
 		{
 			iss >> token;
-			if (token == "on")
-				Search::searchInfo.debug = true;
-			else if (token == "off")
-				Search::searchInfo.debug = false;
+			debug = token == "on";
 		}
 		else if (token == "isready")
 		{
@@ -90,24 +71,7 @@ int main(int argc, char *argv[])
 			while (iss >> token)
 				value += std::string(" ", value.empty() ? 0 : 1) + token;
 
-			setoptionReceived(name, value);
-		}
-		else if (token == "register")
-		{
-			auto        later = false;
-			std::string name;
-			std::size_t code = 0;
-			iss >> token;
-			if (token == "later")
-				later = true;
-			if (token == "name")
-				while (iss >> token && token != "code")
-					name += std::string(" ", name.empty() ? 0 : 1) + token;
-			if (token == "code")
-				iss >> code;
-		}
-		else if (token == "ucinewgame")
-		{
+			setoptionReceived(search, name, value);
 		}
 		else if (token == "position")
 		{
@@ -135,32 +99,64 @@ int main(int argc, char *argv[])
 		}
 		else if (token == "go")
 		{
-			std::map<Command, CommandParam> commands;
-			commands[Command::depth].number = maxdepth;
-
-			Search::searchInfo.ponder = false;
-			Search::searchInfo.sendOutput = true;
+			long long clock_left[COLOR_NB] = { -1, -1 };
+			search.setInfinite(false);
+			search.unsetMaxDepth();
+			search.unsetClock(WHITE);
+			search.unsetClock(BLACK);
+			search.unsetMoveTime();
+			search.setPonder(false);
 
 			while (iss >> token)
-				if (token == "searchmoves")
-					while (iss >> token)
-						commands[Command::search_moves].str += std::string(" ", commands[Command::search_moves].str.empty() ? 0 : 1) + token;
-				else if (token == "ponder")
-					Search::searchInfo.ponder = true;
+				if (token == "ponder")
+					search.setPonder(true);
 				else if (token == "depth")
-					iss >> commands[Command::depth].number;
-			Search::startSearch(board, commands[Command::depth].number);
+				{
+					int depth;
+					iss >> depth;
+					search.setMaxDepth(depth);
+				}
+				else if (token == "movetime")
+				{
+					long long movetime;
+					iss >> movetime;
+					search.setMoveTime(std::chrono::milliseconds(movetime));
+				}
+				else if (token == "wtime")
+				{
+					long long clock;
+					iss >> clock;
+					search.setClock(WHITE, std::chrono::milliseconds(clock));
+				}
+				else if (token == "btime")
+				{
+					long long clock;
+					iss >> clock;
+					search.setClock(BLACK, std::chrono::milliseconds(clock));
+				}
+
+			if (search.getPonder())
+			{
+				search.unsetMaxDepth();
+				search.unsetClock(WHITE);
+				search.unsetClock(BLACK);
+				search.unsetMoveTime();
+			}
+
+			SearchEventHandler handler(search, debug);
+			search.startSearch(board);
 		}
 		else if (token == "stop")
 		{
-			Search::searchInfo.stop = true;
+			search.stopSearch();
 		}
 		else if (token == "ponderhit")
 		{
-			Search::searchInfo.ponder = false;
+			search.setPonder(false);
 		}
 		else if (token == "quit")
 		{
+			search.stopSearch();
 			running = false;
 		}
 		else if (token == "eval")
@@ -231,20 +227,14 @@ int main(int argc, char *argv[])
 	}
 }
 
-void setoptionReceived(std::string name, std::string value)
+void setoptionReceived(Search::Search &search, std::string name, std::string value)
 {
-	if (name == "maxdepth")
+	if (name == "Hash")
 	{
 		std::stringstream ss(value);
-		ss >> maxdepth;
-	}
-	else if (name == "Hash")
-	{
-		std::stringstream ss(value);
-		int size_mb;
-		ss >> size_mb;
-		Search::searchInfo.transposition_table.resize(size_mb);
-		Search::searchInfo.evaluation_table.resize(size_mb);
+		int size;
+		ss >> size;
+		search.setHashSize(size);
 	}
 }
 
@@ -299,6 +289,7 @@ void printPerftRes(const Perft::PerftResult& res)
 
 void runTest(const std::string &in_file, int depth, const std::string &out_file)
 {
+	Search::Search search;
 	std::ifstream in(in_file);
 
 	if (!in)
@@ -327,7 +318,6 @@ void runTest(const std::string &in_file, int depth, const std::string &out_file)
 	messages.reserve(epdData.size());
 
 	int passed = 0;
-	Search::searchInfo.sendOutput = false;
 
 	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 
@@ -339,7 +329,9 @@ void runTest(const std::string &in_file, int depth, const std::string &out_file)
 
 		std::stringstream message;
 		Move bestMove;
-		Search::search(epdData[i].board, depth, &bestMove);
+
+		search.setMaxDepth(depth);
+		search.search(epdData[i].board, &bestMove);
 
 		message << epdData[i].id << "\t:\t";
 		if (std::find(epdData[i].bad_moves.begin(), epdData[i].bad_moves.end(), bestMove) != epdData[i].bad_moves.end() |

@@ -136,6 +136,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="search_event_handler.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="search_event_handler.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

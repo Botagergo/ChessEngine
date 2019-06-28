@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <thread>
+#include <vector>
 
 #include "board.h"
 #include "config.h"
@@ -14,33 +15,15 @@
 
 namespace Search
 {
-	const int RFutility_Depth = 3;
-	const int RFutility_Param = 120;
-	const int IID_Depth = 6;
-	const int IID_Reduction = 4;
-
-	extern std::thread search_thrd;
-
-	struct SearchInfo
+	class Search
 	{
-		SearchInfo() : transposition_table(DEFAULT_HASH_TABLE_SIZE), evaluation_table(DEFAULT_HASH_TABLE_SIZE) {};
+	public:
+		Search();
 
-		TranspositionTable transposition_table;
-		EvaluationTable evaluation_table;
-		std::pair<Move, Move> killer_moves[MAX_DEPTH];
-		std::array<u64, MAX_DEPTH> history;
-
-		bool debug = false;
-		bool stop = false;
-		bool ponder = false;
-		bool passed_maxdepth = false;
-		bool sendOutput = true;
-
-		u64 move_gen_count;
-		u64 searched_moves_sum;
-
-		struct
+		struct Stats
 		{
+			Stats() { memset(this, 0, sizeof(*this)); }
+
 			u64 alpha_beta_nodes;
 			u64 quiescence_nodes;
 			u64 alpha_beta_cutoffs;
@@ -50,49 +33,132 @@ namespace Search
 			u64 hash_score_returned;
 			u64 pv_search_research_count;
 			float avg_searched_moves;
-		} Stats;
+
+			u64 _move_gen_count;
+			u64 _searched_moves_sum;
+		} stats;
+
+		void startSearch(const Board& board);
+		void search(const Board& board, Move* bestMove = nullptr, bool quiet = false);
+
+		void stopSearch();
+
+		bool hasClock(Color color);
+		std::chrono::milliseconds getClock(Color color);
+		void setClock(Color color, std::chrono::milliseconds clock);
+		void unsetClock(Color color);
+
+		bool hasMaxDepth();
+		int getMaxDepth();
+		void setMaxDepth(int maxdepth);
+		void unsetMaxDepth();
+
+		bool hasMoveTime();
+		std::chrono::milliseconds getMoveTime();
+		void setMoveTime(std::chrono::milliseconds movetime);
+		void unsetMoveTime();
+
+		bool isInfinite();
+		void setInfinite(bool infinite);
+
+		bool getPonder();
+		void setPonder(bool ponder);
+
+		// The size of the hash table in megabytes
+		size_t getHashSize();
+		void setHashSize(size_t size);
+
+		const Stats& getStats();
+
+		void (*onBestMove)(Move move, Move ponder_move);
+		void (*onPrincipalVariation)(const std::vector<Move>& pv, int depth, int score, bool mate);
+		void (*onCurrentMove)(Move move, int pos);
+		void (*onNodeInfo)(u64 node_count, u64 nodes_per_sec);
+		void (*onHashfull)(int permill);
+		void (*onStats)(const Stats &stats);
+
+	private:
+		template <Color toMove, bool pvNode, bool nullMoveAllowed>
+		int _alphaBeta(const Board& board, int alpha, int beta, int depthleft, int ply, std::vector<Move>* pv);
+
+		template <Color toMove>
+		int _quiescence(const Board& board, int alpha, int beta);
+
+		void _updateNodesPerSec();
+		void _infoThread();
+
+		bool _isRepetition(u64 hash, int ply);
+		bool _isMateScore(int score);
+		int _razorMargin(int depth);
+
+		bool _passedMaxdepth();
+		bool _timeOut();
+		bool _shouldStopSearch();
+
+		void _resizeHashTable(size_t size);
+
+		TranspositionTable _transposition_table;
+		EvaluationTable _evaluation_table;
+
+		size_t _hash_size;
+
+		std::pair<Move, Move> _killer_moves[MAX_DEPTH];
+		std::array<u64, MAX_DEPTH> _history;
+
+		std::thread _search_thrd;
+
+		bool _has_clock[COLOR_NB];
+		std::chrono::milliseconds _clock[COLOR_NB];
+
+		int _maxdepth;
+		bool _has_maxdepth;
+
+		// The exact length of the search
+		bool _has_movetime;
+		std::chrono::milliseconds _movetime;
+
+		// If true, the search doesn't stop unless manually terminated
+		bool _infinite;
+
+		bool _stop;
+		bool _ponder;
+
+		// This is needed when pondering, when the search is infinite. If the opponent makes the expected move,
+		// we have to switch from pondering to normal search, and consequently stop searching if maxdepth is passed
+		bool _passed_maxdepth;
+
+		// Disable stopping the search by command of by timeout on the first stage of the iterative deepening
+		bool _can_stop_search;
 
 		struct
 		{
 			u64 last_node_count;
 			u64 node_count;
 			std::chrono::steady_clock::time_point last_time;
+			std::chrono::milliseconds elapsed_time;
 			int nodes_per_sec;
-		} NodeCountInfo;
+			bool has_time_left;
+			std::chrono::milliseconds time_left;
+		} Timer;
+
+		// Search parameters
+		const static int _RFutility_Depth;
+		const static int _RFutility_Param;
+		const static int _IID_Depth;
+		const static int _IID_Reduction;
+		const static double _ThinkTimePercentage;
 	};
 
-	extern SearchInfo searchInfo;
-
-	void sendStats();
-	void updateNodesPerSec();
-	void infoThread();
-
-	void sendBestMove(Move move, Move ponder_move);
-	void sendPrincipalVariation(const std::vector<Move> & pv, int depth, int score, bool mate);
-	void sendCurrentMove(Move move, int pos);
-	void sendNodeInfo(u64 node_count, u64 nodes_per_sec);
-	void sendHashfull(int permill);
-
-	void startSearch(const Board & board, int maxdepth);
-	void search(const Board & board, int maxdepth, Move *bestMove = nullptr);
-
-	bool isRepetition(u64 hash, int ply);
-
-	inline int razorMargin(int depth)
-	{
-		return (90 * (depth - 1) + 18);
-	}
-
 	template <Color toMove>
-	int quiescence(const Board& board, int alpha, int beta)
+	int Search::_quiescence(const Board& board, int alpha, int beta)
 	{
-		++searchInfo.Stats.quiescence_nodes;
+		++stats.quiescence_nodes;
 
-		int stand_pat = searchInfo.evaluation_table.probe(board.hash(), alpha, beta);
+		int stand_pat = _evaluation_table.probe(board.hash(), alpha, beta);
 		if (stand_pat != SCORE_INVALID)
 		{
 			stand_pat = Evaluation::evaluate<toMove>(board);
-			searchInfo.evaluation_table.insert(board.hash(), stand_pat, EXACT);
+			_evaluation_table.insert(board.hash(), stand_pat, EXACT);
 		}
 
 		if (stand_pat >= beta)
@@ -119,11 +185,11 @@ namespace Search
 			if (!board_copy.makeMove(mg.curr()))
 				continue;
 
-			int score = -quiescence<~toMove>(board_copy, -beta, -alpha);
+			int score = -_quiescence<~toMove>(board_copy, -beta, -alpha);
 			if (score >= beta)
 			{
-				++searchInfo.Stats.quiescence_cutoffs;
-				searchInfo.evaluation_table.insert(board.hash(), score, LOWER_BOUND);
+				++stats.quiescence_cutoffs;
+				_evaluation_table.insert(board.hash(), score, LOWER_BOUND);
 				return beta;
 			}
 			if (score > alpha)
@@ -131,39 +197,41 @@ namespace Search
 		}
 
 		if (alpha > alpha_orig)
-			searchInfo.evaluation_table.insert(board.hash(), alpha, EXACT);
+			_evaluation_table.insert(board.hash(), alpha, EXACT);
 		else
-			searchInfo.evaluation_table.insert(board.hash(), alpha, UPPER_BOUND);
+			_evaluation_table.insert(board.hash(), alpha, UPPER_BOUND);
 
 		return alpha;
 	}
 
 	template <Color toMove, bool pvNode, bool nullMoveAllowed>
-	int alphaBeta(const Board & board, int alpha, int beta, int depthleft, int ply, std::vector<Move> * pv)
+	int Search::_alphaBeta(const Board & board, int alpha, int beta, int depthleft, int ply, std::vector<Move> * pv)
 	{
 		ASSERT(depthleft >= 0);
 
-		++searchInfo.Stats.alpha_beta_nodes;
+		if (_shouldStopSearch())
+			return SCORE_INVALID;
 
-		if (searchInfo.sendOutput && searchInfo.Stats.alpha_beta_nodes % 10000 == 0)
+		++stats.alpha_beta_nodes;
+
+		if (stats.alpha_beta_nodes % 30000 == 0)
 		{
-			sendNodeInfo(searchInfo.NodeCountInfo.node_count, searchInfo.NodeCountInfo.nodes_per_sec);
-			sendHashfull((int)(searchInfo.transposition_table.usage() * 1000));
+			if (onNodeInfo)
+				onNodeInfo(Timer.node_count, Timer.nodes_per_sec);
+			if (onHashfull)
+				onHashfull((int)(_transposition_table.usage() * 1000));
 		}
 
-		searchInfo.history[ply] = board.hash();
-
-		if (searchInfo.stop || searchInfo.passed_maxdepth && !searchInfo.ponder)
-			return SCORE_INVALID;
+		_history[ply] = board.hash();
 
 		Move hash_move = Move();
 
 		// Transposition table lookup
-		auto hash = searchInfo.transposition_table.probe(board.hash(), depthleft, alpha, beta);
+		auto hash = _transposition_table.probe(board.hash(), depthleft, alpha, beta);
 		if (hash.first == alpha || hash.first == beta)
 		{
 			ASSERT(ply);
-			++searchInfo.Stats.hash_score_returned;
+			++stats.hash_score_returned;
 			return hash.first;
 		}
 		else if (hash.second.isValid())
@@ -173,16 +241,16 @@ namespace Search
 		}
 
 		if (depthleft == 0)
-			return quiescence<toMove>(board, alpha, beta);
+			return _quiescence<toMove>(board, alpha, beta);
 
 		int eval = Evaluation::evaluate<toMove>(board);
 
 		// Reverse futility pruning
 		if (!pvNode
-			&& depthleft <= RFutility_Depth
+			&& depthleft <= _RFutility_Depth
 			&& !board.isInCheck(toMove)
 			&& std::abs(alpha) < SCORE_MIN_MATE && std::abs(beta) < SCORE_MIN_MATE
-			&& eval - RFutility_Param * depthleft >= beta
+			&& eval - _RFutility_Param * depthleft >= beta
 			&& board.allowNullMove())
 		{
 			return beta;
@@ -197,19 +265,21 @@ namespace Search
 			Board board_copy = board;
 			board_copy.makeMove(Move::nullMove());
 
-			int score = -alphaBeta<~toMove, false, false>(board_copy, -beta, -beta + 1, depthleft - 3, ply + 1, nullptr);
+			int score = -_alphaBeta<~toMove, false, false>(board_copy, -beta, -beta + 1, depthleft - 3, ply + 1, nullptr);
 			if (score >= beta)
 				return beta;
 		}
 
 		// Razoring
+		int margin = _razorMargin(depthleft);
+
 		if (!board.isInCheck(toMove)
 			&& depthleft <= 3
 			&& !pvNode
-			&& eval + razorMargin(depthleft) <= alpha)
+			&& eval + margin <= alpha)
 		{
-			int res = quiescence<toMove>(board, alpha - razorMargin(depthleft), beta - razorMargin(depthleft));
-			if (res + razorMargin(depthleft) <= alpha)
+			int res = _quiescence<toMove>(board, alpha - margin, beta - margin);
+			if (res + margin <= alpha)
 				depthleft--;
 
 			if (depthleft <= 0)
@@ -217,10 +287,10 @@ namespace Search
 		}
 
 		//// Internal iterative deepening
-		//if (depthleft >= IID_Depth && !hash_move.isValid() && pvNode)
+		//if (depthleft >= Params.IID_Depth && !hash_move.isValid() && pvNode)
 		//{
 		//	Board board_copy = board;
-		//	alphaBeta<toMove, true, false>(board_copy, alpha, beta, depthleft - IID_Reduction, ply + 1, nullptr);
+		//	alphaBeta<toMove, true, false>(board_copy, alpha, beta, depthleft - Params.IID_Reduction, ply + 1, nullptr);
 		//	hash_move = searchInfo.transposition_table.probe(board.hash(), 0, alpha, beta).second;
 		//}
 
@@ -243,8 +313,8 @@ namespace Search
 			new_pv_ptr = &new_pv;
 		}
 
-		MoveSelect::MoveSelector<toMove, false> mg(board, hash_move, searchInfo.killer_moves[ply]);
-		searchInfo.move_gen_count++;
+		MoveSelect::MoveSelector<toMove, false> mg(board, hash_move, _killer_moves[ply]);
+		stats._move_gen_count++;
 
 		for(int i = 1; !mg.end(); ++i, mg.next())
 		{
@@ -253,24 +323,24 @@ namespace Search
 			if (!board_copy.makeMove(mg.curr()))
 				continue;
 
-			if (isRepetition(board_copy.hash(), ply))
+			if (_isRepetition(board_copy.hash(), ply))
 			{
 				score = 0;
 				goto SearchEnd;
 			}
 
-			if (ply == 0 && searchInfo.sendOutput)
-				sendCurrentMove(mg.curr(), searched_moves + 1);
+			if (onCurrentMove && ply == 0)
+				onCurrentMove(mg.curr(), searched_moves + 1);
 
 			if (searched_moves < 1)
-				score = -alphaBeta<~toMove, pvNode, false>(board_copy, -beta, -alpha, depthleft - 1, ply + 1, new_pv_ptr);
+				score = -_alphaBeta<~toMove, pvNode, false>(board_copy, -beta, -alpha, depthleft - 1, ply + 1, new_pv_ptr);
 			else
 			{
-				score = -alphaBeta<~toMove, false, true>(board_copy, -(alpha + 1), -alpha, depthleft - 1, ply + 1, nullptr);
+				score = -_alphaBeta<~toMove, false, true>(board_copy, -(alpha + 1), -alpha, depthleft - 1, ply + 1, nullptr);
 				if (score > alpha)
 				{
-					++searchInfo.Stats.pv_search_research_count;
-					score = -alphaBeta<~toMove, pvNode, false>(board_copy, -beta, -alpha, depthleft - 1, ply + 1, new_pv_ptr);
+					++stats.pv_search_research_count;
+					score = -_alphaBeta<~toMove, pvNode, false>(board_copy, -beta, -alpha, depthleft - 1, ply + 1, new_pv_ptr);
 				}
 			}
 
@@ -280,7 +350,7 @@ namespace Search
 SearchEnd:
 
 			++searched_moves;
-			searchInfo.searched_moves_sum++;
+			stats._searched_moves_sum++;
 
 			if (score > alpha && score < beta)
 			{
@@ -292,22 +362,22 @@ SearchEnd:
 
 			if (score >= beta)
 			{
-				++searchInfo.Stats.alpha_beta_cutoffs;
+				++stats.alpha_beta_cutoffs;
 
 				if (mg.curr() == hash_move)
-					++searchInfo.Stats.hash_move_cutoffs;
+					++stats.hash_move_cutoffs;
 
 				if (mg.curr().isQuiet())
 				{
-					if (mg.curr() == searchInfo.killer_moves[ply].first || mg.curr() == searchInfo.killer_moves[ply].second)
-						++searchInfo.Stats.killer_move_cutoffs;
+					if (mg.curr() == _killer_moves[ply].first || mg.curr() == _killer_moves[ply].second)
+						++stats.killer_move_cutoffs;
 
-					searchInfo.killer_moves[ply].second = searchInfo.killer_moves[ply].first;
-					searchInfo.killer_moves[ply].first = mg.curr();
+					_killer_moves[ply].second = _killer_moves[ply].first;
+					_killer_moves[ply].first = mg.curr();
 				}
 
 				assert(mg.curr() != Move());
-				searchInfo.transposition_table.insert(board.hash(), depthleft, beta, mg.curr(), LOWER_BOUND);
+				_transposition_table.insert(board.hash(), depthleft, beta, mg.curr(), LOWER_BOUND);
 				return beta;
 			}
 
@@ -340,12 +410,12 @@ SearchEnd:
 
 		if (alpha == alpha_orig)
 		{
-			searchInfo.transposition_table.insert(board.hash(), depthleft, alpha, Move(), UPPER_BOUND);
+			_transposition_table.insert(board.hash(), depthleft, alpha, Move(), UPPER_BOUND);
 		}
 		else if (pv)
 		{
 			assert((*pv)[0] != Move());
-			searchInfo.transposition_table.insert(board.hash(), depthleft, alpha, (*pv)[0], EXACT);
+			_transposition_table.insert(board.hash(), depthleft, alpha, (*pv)[0], EXACT);
 		}
 
 		return alpha;
