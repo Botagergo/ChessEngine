@@ -1,11 +1,11 @@
 #pragma once
 
 #include "move.h"
-#include "board.h"
 
 class EvaluationTable
 {
 public:
+	EvaluationTable() {};
 	EvaluationTable(size_t mb) { resize(mb); }
 	~EvaluationTable() { if (_entries) delete _entries; }
 

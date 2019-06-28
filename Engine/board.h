@@ -1,9 +1,6 @@
 ﻿#pragma once
 
 #include <array>
-#include <sstream>
-#include <string>
-#include <vector>
 
 #include "attack_tables.h"
 #include "bitboard_iterator.h"

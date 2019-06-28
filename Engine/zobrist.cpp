@@ -1,6 +1,8 @@
 #include <random>
 #include <ctime>
 
+#include "board.h"
+#include "types.h"
 #include "zobrist.h"
 
 namespace Zobrist

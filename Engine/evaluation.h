@@ -113,7 +113,7 @@ namespace Evaluation
 			shelter2 = Util::popCount(pawns & Util::shift<Util::forwardDirection<color>()>(QueenShield[color]));
 		}
 
-		score.mg += (int)(shelter1 * 5.5 + shelter2 * 2);
+		score.mg += (int)(shelter1 * 5.5 + shelter2 * 2.0);
 		score.eg += shelter1 + shelter2;
 
 		return score;

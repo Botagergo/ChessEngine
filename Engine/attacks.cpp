@@ -1,4 +1,5 @@
 #include "attacks.h"
+#include "attack_tables.h"
 #include "config.h"
 
 #include <iostream>

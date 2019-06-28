@@ -1,11 +1,11 @@
 #pragma once
 
 #include "move.h"
-#include "board.h"
 
 class TranspositionTable
 {
 public:
+	TranspositionTable() {};
 	TranspositionTable(size_t mb) { resize(mb); }
 	~TranspositionTable() { if (_entries) delete _entries; }
 

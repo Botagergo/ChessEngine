@@ -4,6 +4,7 @@
 
 #include <fstream>
 #include <stack>
+#include <sstream>
 #include <vector>
 
 #include "config.h"

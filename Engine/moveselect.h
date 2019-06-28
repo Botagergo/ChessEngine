@@ -4,6 +4,8 @@
 #include "config.h"
 #include "movegen.h"
 
+#include <vector>
+
 namespace MoveSelect
 {
 	int mvvlva(const Board & board, Move move);

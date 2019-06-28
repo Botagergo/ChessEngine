@@ -1,4 +1,6 @@
 ﻿#include <regex>
+#include <string>
+#include <sstream>
 
 #include "attacks.h"
 #include "bitboard_iterator.h"

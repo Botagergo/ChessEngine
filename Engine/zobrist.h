@@ -1,6 +1,6 @@
 #pragma once
 
-#include "board.h"
+class Board;
 
 namespace Zobrist
 {

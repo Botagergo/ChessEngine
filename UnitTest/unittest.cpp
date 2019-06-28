@@ -13,6 +13,7 @@
 #include <locale>
 #include <codecvt>
 #include <string>
+#include <vector>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace std;

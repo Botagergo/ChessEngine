@@ -1,6 +1,5 @@
 #pragma once
 
-#include "constants.h"
 #include "types.h"
 
 extern Bitboard KnightAttackTable[SQUARE_NB];
