@@ -67,7 +67,6 @@ namespace MoveSelect
 	private:
 		void _getScores()
 		{
-			_scores.resize(_move_count);
 			for (int i = 0; i < _move_count; ++i)
 			{
 				if (_moves[i].isPromotion())
@@ -110,8 +109,8 @@ namespace MoveSelect
 		Move _hash_move;
 		const std::pair<Move, Move> &_killer_moves;
 		Move _moves[MAX_MOVES];
+		int _scores[MAX_MOVES];
 		int _move_count;
-		std::vector<int> _scores;
 		int _pos;
 		bool _curr_hash_move;
 	};

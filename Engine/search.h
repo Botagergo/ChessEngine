@@ -2,7 +2,6 @@
 
 #include <chrono>
 #include <thread>
-#include <vector>
 
 #include "board.h"
 #include "config.h"
@@ -71,7 +70,7 @@ namespace Search
 		const Stats& getStats();
 
 		void (*onBestMove)(Move move, Move ponder_move);
-		void (*onPrincipalVariation)(const std::vector<Move>& pv, int depth, int score, bool mate);
+		void (*onPrincipalVariation)(const std::array<Move, MAX_DEPTH>& pv, int depth, int score, bool mate);
 		void (*onCurrentMove)(Move move, int pos);
 		void (*onNodeInfo)(u64 node_count, u64 nodes_per_sec);
 		void (*onHashfull)(int permill);
@@ -79,7 +78,7 @@ namespace Search
 
 	private:
 		template <Color toMove, bool pvNode, bool nullMoveAllowed>
-		int _alphaBeta(const Board& board, int alpha, int beta, int depthleft, int ply, std::vector<Move>* pv);
+		int _alphaBeta(const Board& board, int alpha, int beta, int depthleft, int ply, std::array<Move, MAX_DEPTH>* pv);
 
 		template <Color toMove>
 		int _quiescence(const Board& board, int alpha, int beta);
@@ -205,7 +204,7 @@ namespace Search
 	}
 
 	template <Color toMove, bool pvNode, bool nullMoveAllowed>
-	int Search::_alphaBeta(const Board & board, int alpha, int beta, int depthleft, int ply, std::vector<Move> * pv)
+	int Search::_alphaBeta(const Board & board, int alpha, int beta, int depthleft, int ply, std::array<Move, MAX_DEPTH>* pv)
 	{
 		ASSERT(depthleft >= 0);
 
@@ -304,12 +303,11 @@ namespace Search
 		int searched_moves = 0;
 		int alpha_orig = alpha;
 		int score;
-		std::vector<Move> new_pv;
-		std::vector<Move> * new_pv_ptr = nullptr;
+		std::array<Move, MAX_DEPTH> new_pv;
+		std::array<Move, MAX_DEPTH>* new_pv_ptr = nullptr;
 
 		if (pvNode)
 		{
-			new_pv.resize(MAX_DEPTH);
 			new_pv_ptr = &new_pv;
 		}
 
@@ -388,8 +386,6 @@ SearchEnd:
 				if (pv)
 				{
 					assert(new_pv_ptr != nullptr && pv != nullptr);
-
-					pv->resize(MAX_DEPTH);
 
 					(*pv)[0] = mg.curr();
 					std::copy(new_pv.begin(), new_pv.begin() + depthleft - 1, pv->begin() + 1);

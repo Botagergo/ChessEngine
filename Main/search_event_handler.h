@@ -25,7 +25,7 @@ private:
 		std::cout << std::endl;
 	}
 
-	static void onPrincipalVariation(const std::vector<Move>& pv, int depth, int score, bool mate)
+	static void onPrincipalVariation(const std::array<Move, MAX_DEPTH>& pv, int depth, int score, bool mate)
 	{
 		int moves_nb = depth;
 

@@ -60,7 +60,7 @@ namespace Search
 		else
 			Timer.has_time_left = false;
 
-		std::vector<std::vector<Move>> pv(MAX_DEPTH);
+		std::array<std::array<Move, MAX_DEPTH>, MAX_DEPTH> pv;
 
 		_transposition_table.clear();
 		_evaluation_table.clear();
